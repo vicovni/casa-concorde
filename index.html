@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Cto. Concorde — recorrido 3D</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html,body { margin:0; height:100%; overflow:hidden;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+  canvas { display:block; width:100%; height:100%; }
+  .hidden { display:none !important; }
+
+  #overlay { position:fixed; inset:0; display:grid; place-items:center;
+    background:rgba(10,14,18,.72); backdrop-filter:blur(6px); cursor:pointer; z-index:5; }
+  #overlay .card { max-width:540px; padding:28px 32px; text-align:center;
+    background:rgba(22,28,34,.9); border:1px solid rgba(255,255,255,.12); border-radius:14px; }
+  #overlay h1 { margin:0 0 6px; font-size:22px; letter-spacing:.2px; }
+  #overlay p { margin:6px 0; color:#b9c4cd; font-size:14px; line-height:1.5; }
+  kbd { background:#2b333c; border:1px solid #444e58; border-bottom-width:2px;
+    border-radius:5px; padding:1px 6px; font-size:12px; font-family:inherit; }
+
+  #start { margin-top:16px; padding:11px 22px; font:inherit; font-size:14px; font-weight:600;
+    color:#0f1419; background:#e8eef3; border:0; border-radius:9px; cursor:pointer; }
+  #start:hover { background:#fff; }
+
+  #hud { position:fixed; left:14px; bottom:14px; z-index:4;
+    background:rgba(16,21,26,.72); border:1px solid rgba(255,255,255,.1);
+    border-radius:10px; padding:10px 13px; font-size:13px; color:#e6ecf1; }
+  #hud #where { font-weight:600; }
+  #hud #coords { color:#8b98a4; font-size:11px; margin-top:3px; font-variant-numeric:tabular-nums; }
+  #hud #mode { color:#8b98a4; font-size:11px; }
+
+  #help { position:fixed; right:14px; top:14px; z-index:4; width:250px;
+    background:rgba(16,21,26,.72); border:1px solid rgba(255,255,255,.1);
+    border-radius:10px; padding:12px 14px; font-size:12.5px; color:#cfd8e0; line-height:1.75; }
+  #help b { color:#fff; }
+  #links { position:fixed; left:14px; top:14px; z-index:4; font-size:12.5px; }
+  #links a, #muebles { display:inline-block; color:#cfd8e0; background:rgba(16,21,26,.72);
+    padding:7px 11px; border:1px solid rgba(255,255,255,.1); border-radius:8px;
+    text-decoration:none; font:inherit; font-size:12.5px; cursor:pointer; }
+  #links a:hover, #muebles:hover { background:rgba(40,52,64,.9); color:#fff; }
+  #muebles.on { background:rgba(96,124,150,.85); color:#fff; }
+
+  #cross { position:fixed; left:50%; top:50%; width:8px; height:8px; margin:-4px 0 0 -4px;
+    border:1.5px solid rgba(255,255,255,.75); border-radius:50%; z-index:3; pointer-events:none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="cross"></div>
+
+<div id="links">
+  <a href="plano.html">← Ver plano 2D</a>
+  <button id="muebles">Mostrar muebles (M)</button>
+</div>
+
+<div id="help">
+  <b>Moverte</b><br>
+  <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas · <kbd>Shift</kbd> correr<br>
+  Mouse para mirar (si no lo captura, arrastra) · <kbd>Esc</kbd> menú<br>
+  <b>1</b> cochera · <b>2</b> intermedio · <b>3</b> recámaras<br>
+  <b>M</b> muebles y coches · <b>O</b> vista orbital<br>
+  <b>C</b> atravesar muros · <b>H</b> ocultar esta ayuda
+</div>
+
+<div id="hud">
+  <div id="where">—</div>
+  <div id="coords">—</div>
+  <div id="mode">Primera persona</div>
+</div>
+
+<div id="overlay">
+  <div class="card">
+    <h1>Casa Cto. Concorde</h1>
+    <p>Da clic en cualquier parte para entrar y recorrerla.</p>
+    <p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> o las flechas para caminar,
+       el mouse para mirar, <kbd>Shift</kbd> para correr. Si el navegador no captura
+       el mouse, mira arrastrando con el botón izquierdo.</p>
+    <p><kbd>1</kbd> cochera · <kbd>2</kbd> nivel intermedio · <kbd>3</kbd> recámaras ·
+       <kbd>O</kbd> vista de maqueta · <kbd>M</kbd> muebles y coches</p>
+    <p style="color:#7f8b96;font-size:12px">Apareces en la sala. Las escaleras del centro
+       bajan a las recámaras; las del vestíbulo suben a la cochera.</p>
+    <button id="start">Entrar a la casa</button>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "/node_modules/three/build/three.module.js",
+    "three/addons/": "/node_modules/three/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import { Viewer } from '/src/viewer3d.js';
+  const ui = {
+    overlay: document.getElementById('overlay'),
+    help: document.getElementById('help'),
+    where: document.getElementById('where'),
+    coords: document.getElementById('coords'),
+    mode: document.getElementById('mode'),
+    start: document.getElementById('start'),
+    muebles: document.getElementById('muebles'),
+  };
+  window.viewer = new Viewer(document.getElementById('c'), ui);
+</script>
+</body>
+</html>

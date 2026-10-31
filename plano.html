@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Cto. Concorde — planos</title>
+<style>
+  body { margin:0; background:#eceae5; color:#23262a;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+  header { padding:22px 28px 10px; }
+  h1 { margin:0; font-size:22px; }
+  header p { margin:6px 0 0; color:#60666c; font-size:13.5px; max-width:70ch; line-height:1.6; }
+  .top a { display:inline-block; margin-top:12px; font-size:13px; color:#fff;
+    background:#2f3a44; padding:8px 14px; border-radius:8px; text-decoration:none; }
+  .levels { display:flex; gap:22px; padding:18px 28px 40px; align-items:flex-start;
+    overflow-x:auto; }
+  .lv { background:#fff; border:1px solid #d8d4cc; border-radius:12px; padding:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .lv h2 { margin:0 0 2px; font-size:15px; }
+  .lv .z { margin:0 0 10px; font-size:12px; color:#7a8088; }
+  .notes { padding:0 28px 48px; max-width:92ch; }
+  .notes h3 { font-size:15px; margin:18px 0 6px; }
+  .notes ul { margin:0; padding-left:20px; font-size:13.5px; line-height:1.75; color:#3b4046; }
+  .notes li b { color:#8a3b31; }
+  .legend { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:#555;
+    padding:0 28px 6px; }
+  .legend i { display:inline-block; width:12px; height:12px; border-radius:3px;
+    margin-right:5px; vertical-align:-2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Casa Cto. Concorde — planta por nivel</h1>
+  <p>Generado a partir del modelo paramétrico (<code>src/model.js</code>). El norte (la calle
+     Cto Concorde) queda arriba, igual que en la vista satelital. Las cotas en rojo son las
+     medidas que diste; el resto está inferido.</p>
+  <div class="top"><a href="index.html">Recorrer en 3D →</a></div>
+</header>
+<div class="legend">
+  <span><i style="background:#3a3a3a"></i>muro</span>
+  <span><i style="background:#4a8fb5"></i>cristal piso-techo</span>
+  <span><i style="background:#e8eef5"></i>sala</span>
+  <span><i style="background:#e9f3ec"></i>cocina</span>
+  <span><i style="background:#f3eee6"></i>recámara</span>
+  <span><i style="background:#e6f0f6"></i>baño</span>
+  <span><i style="background:#dfeadd"></i>patio / zotehuela</span>
+</div>
+<div class="levels" id="levels"></div>
+
+<div class="notes">
+  <h3>Medidas de obra (las que me diste)</h3>
+  <ul>
+    <li>Sala 4.00 × 9.66 · cocina 3.50 × 3.60 · recámaras 4.60, 3.70 y 2.80 de fondo ·
+        <b>pasillo 2.01 × 1.68</b> · <b>acceso-clóset de la recámara 1, 1.56 × 1.74</b> ·
+        <b>zotehuela de abajo 2.74 × 1.68</b> · <b>zotehuela de la sala 1.54 × 1.73</b> ·
+        <b>escaleras de 0.91</b>.</li>
+    <li>Bajando la escalera: a mano izquierda la zotehuela, a mano derecha el
+        acceso-clóset de la recámara 1. El baño va entre la zotehuela y la
+        recámara 3. La recámara 1 es la única que sube hasta el muro del fondo.</li>
+  </ul>
+  <h3>Por qué la fachada escalona hacia la derecha</h3>
+  <ul>
+    <li>Cada recámara arranca donde la deja lo que trae encima y su fondo se mide de
+        ahí al frente. La 1 arranca en el muro del fondo, la 2 bajo la banda de
+        servicio y la 3 bajo el baño, que son 2.00 m más. Por eso la 3 es la que más
+        sobresale: <b>escalones de 0.90 y 1.22</b>, no parejos.</li>
+  </ul>
+  <h3>Lo que tuve que ajustar para que cerrara el ancho</h3>
+  <ul>
+    <li>Los tres muros de la banda de servicio los puse de <b>0.18</b>. Es lo único
+        que hace cuadrar a la vez los anchos medidos (1.56 + 2.01 + 2.74) y los de
+        las recámaras (2.80 + 3.10 + 3.50) dentro de los 9.64 interiores. Con muros
+        de 0.12 sobraban 17 cm sin dueño.</li>
+    <li>Con eso la recámara 1 queda de <b>2.79</b> y la 3 de <b>3.45</b>, contra los
+        2.80 y 3.50 que estimaste. El baño quedó de <b>1.80 × 2.00</b>.</li>
+  </ul>
+  <h3>Cambios de esta vuelta</h3>
+  <ul>
+    <li>La escalera a los cuartos quedó al <b>mínimo de reglamento</b>: 17 peraltes
+        de 17.1 cm y huellas de 25 cm, o sea 4.00 m de desarrollo en vez de 4.20.</li>
+    <li>Arranca <b>1.42 m antes</b>, así que el nivel inferior empieza justo donde
+        termina la sala. Eso era lo que no dejaba cuadrar esa parte: ahora la
+        escalera pasa bajo la terraza con <b>2.24 m de altura libre</b> y la casa
+        bajó de 16.48 a <b>15.38</b> de fondo total.</li>
+    <li>La escalera de la cochera es <b>continua</b>: se fue el descanso plano y la
+        vuelta se da sobre tres escalones. Verificado que se baja completa hasta la
+        sala; el tramo de abajo terminaba pegado al muro y ahí se atoraba.</li>
+    <li>El punto donde apareces en la sala se movió: antes caía dentro de la caja de
+        la escalera, entre los muros nuevos.</li>
+  </ul>
+  <h3>Lo que no me cuadra y conviene que revises</h3>
+  <ul>
+    <li>La zotehuela de la sala quedó de 1.54 × <b>1.82</b>, no × 1.73: los 1.82 son
+        lo mínimo que necesitan los dos tramos de 0.91 de la escalera en U.</li>
+    <li>La vuelta de esa escalera la modelé con tres escalones rectos. Si en la casa
+        son <b>escalones en abanico</b>, el dibujo cambia aunque el recorrido sea el
+        mismo.</li>
+    <li>El paso del pasillo al corredor de la recámara 3 y el baño mide 1.33 m.</li>
+    <li><b>Confirmado:</b> la cocina se queda en 2.54 de fondo, aunque al principio
+        se midió 3.60.</li>
+  </ul>
+</div>
+
+<script type="module">
+  import { renderAll } from '/src/plan2d.js';
+  const host = document.getElementById('levels');
+  for (const l of renderAll()) {
+    const d = document.createElement('div');
+    d.className = 'lv';
+    d.innerHTML = `<h2>${l.name}</h2><p class="z">piso terminado ${l.z.toFixed(2)} m</p>${l.svg}`;
+    host.appendChild(d);
+  }
+</script>
+</body>
+</html>
