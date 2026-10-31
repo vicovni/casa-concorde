@@ -16,6 +16,7 @@ const EYE = 1.62;
 const RADIUS = 0.22;
 const STEP_UP = 0.55;
 const GRAVITY = 18;
+const SOFFIT = 0.45;      // espesor aparente de la losa de escalera
 
 export class Viewer {
   constructor(canvas, ui) {
@@ -189,7 +190,10 @@ export class Viewer {
         const cx = (st.x0 + st.x1) / 2, cy = (st.y0 + st.y1) / 2;
         const sx = Math.abs(g.ux) > 0.5 ? g.tread : s.width;
         const sy = Math.abs(g.ux) > 0.5 ? s.width : g.tread;
-        const h = st.zTop - zMin;
+        // El escalon no baja macizo hasta el piso: lleva el espesor de la losa
+        // inclinada, para que debajo de la escalera quede el paso que existe en
+        // la casa real.
+        const h = Math.min(SOFFIT, st.zTop - zMin);
         const stepMats = [
           this.M.stepRiser, this.M.stepRiser, this.M.stepTread,
           this.M.stepRiser, this.M.stepRiser, this.M.stepRiser,

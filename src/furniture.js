@@ -97,8 +97,8 @@ export function buildFurniture(M) {
   /* ---------- N1: SALA ---------- */
   sofa(g, M, 2.10, 1.10, Z.N1, 2.40, 0.95, 0);
   box(g, M.woodDark, 2.10, 2.30, Z.N1, 1.10, 0.55, 0.38);        // mesa de centro
-  box(g, M.woodLight, 2.10, 4.55, Z.N1, 1.80, 0.40, 0.50);       // mueble de TV
-  box(g, M.stone, 2.10, 4.53, Z.N1 + 0.50, 1.30, 0.06, 0.74);    // TV
+  box(g, M.woodLight, 1.30, 4.55, Z.N1, 1.80, 0.40, 0.50);       // mueble de TV
+  box(g, M.stone, 1.30, 4.53, Z.N1 + 0.50, 1.30, 0.06, 0.74);    // TV
   sofa(g, M, 0.75, 2.30, Z.N1, 1.80, 0.90, Math.PI / 2);
 
   // comedor en la sala, lado derecho

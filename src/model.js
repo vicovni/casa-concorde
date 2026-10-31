@@ -59,7 +59,11 @@ export const AX = {
   // --- Y nivel intermedio ---
   Y_SALA_S: 0.10,   // fachada sur de la sala, vidrio piso-techo (0.00 / 0.20)
   Y_COC_S:  4.26,   // sala | cocina   (4.20 / 4.32) -> cocina de 3.60 de fondo
-  Y_BAND_S: 4.98,   // sala | escaleras, medio bano y zotehuela (4.92 / 5.04)
+  Y_BAND_S: 4.98,   // sala | medio bano y zotehuela (4.92 / 5.04)
+  // El bloque de escaleras es 0.92 mas profundo que esos dos: los dos tramos
+  // de 0.91 llenan 1.82 y hace falta una franja libre al sur para poder salir
+  // del pie de la escalera hacia la sala.
+  Y_ESC_S:  4.06,   // sala | escaleras (4.00 / 4.12)
   Y_N1_N:   6.96,   // muro exterior norte, recto para los cuatro (6.86 / 7.06)
   Y_PRISM_S: 4.98,  // muro sur del prisma de escaleras en la cochera (4.92 / 5.04)
 
@@ -161,9 +165,9 @@ const N1 = {
   },
   rooms: [
     { name: 'Sala', kind: 'living', dim: '9.64 x 4.00 (4.72 fuera de la cocina)',
-      poly: [[0.20, 0.20], [9.84, 0.20], [9.84, 4.20],
-             [6.34, 4.20], [6.34, 4.92], [0.20, 4.92]] },
-    { name: 'Vestibulo / escaleras', poly: rect(0.20, 5.04, 3.36, 6.86), kind: 'hall' },
+      poly: [[0.20, 0.20], [9.84, 0.20], [9.84, 4.20], [6.34, 4.20],
+             [6.34, 4.92], [3.36, 4.92], [3.36, 4.00], [0.20, 4.00]] },
+    { name: 'Vestibulo / escaleras', poly: rect(0.20, 4.12, 3.36, 6.86), kind: 'hall' },
     { name: 'Medio bano', poly: rect(3.48, 5.04, 4.56, 6.86), kind: 'bath' },
     { name: 'Zotehuela', poly: rect(4.68, 5.04, 6.22, 6.86), kind: 'patio',
       dim: '1.54 x 1.82' },
@@ -182,14 +186,18 @@ const N1 = {
     W(A.X_COC, A.Y_COC_S, 10.04, A.Y_COC_S, T.INT, H.FLOOR, 'int', [
       pass(0.90, 3.20),     // cocina abierta a la sala
     ]),
-    // sala | escaleras, medio bano y zotehuela
-    W(0, A.Y_BAND_S, A.X_COC, A.Y_BAND_S, T.INT, H.FLOOR, 'int', [
-      pass(1.10, 2.40),     // paso al vestibulo
-      door(3.60, 4.44),     // medio bano
-      door(4.95, 5.95),     // zotehuela
+    // sala | escaleras: la salida queda al pie de la escalera, girando a la
+    // derecha se sale directo a la sala
+    W(0, A.Y_ESC_S, A.X_VEST, A.Y_ESC_S, T.INT, H.FLOOR, 'int', [
+      pass(2.40, 3.36),
+    ]),
+    // sala | medio bano y zotehuela
+    W(A.X_VEST, A.Y_BAND_S, A.X_COC, A.Y_BAND_S, T.INT, H.FLOOR, 'int', [
+      door(0.18, 1.02),     // medio bano
+      door(1.53, 2.53),     // zotehuela
     ]),
     // divisiones de la banda
-    W(A.X_VEST, A.Y_BAND_S, A.X_VEST, A.Y_N1_N, T.INT, H.FLOOR, 'int'),
+    W(A.X_VEST, A.Y_ESC_S, A.X_VEST, A.Y_N1_N, T.INT, H.FLOOR, 'int'),
     W(A.X_MB, A.Y_BAND_S, A.X_MB, A.Y_N1_N, T.INT, H.FLOOR, 'int'),
     W(A.X_COC, A.Y_COC_S, A.X_COC, A.Y_N1_N, T.INT, H.FLOOR, 'int', [
       door(1.50, 2.34),     // acceso cocina -> zotehuela
@@ -312,15 +320,15 @@ const N2 = {
    ESCALERAS   (ancho 0.91 medido en obra; huella 0.25, peralte 17.06 cm)
    ========================================================================== */
 export const STAIRS = [
-  // N0 -> N1 : en U CONTINUA dentro del prisma, sin descanso plano. Bajas por
-  // el lado sur hacia el poniente, das la vuelta a la DERECHA sobre tres
-  // escalones y sigues bajando hacia el oriente. 17 peraltes de 17.06 cm.
-  { id: 'e1a', from: [3.32, 5.495], to: [1.11, 5.495], z0: Z.N0, z1: -1.194,
-    width: ESC.ANCHO, note: 'tramo 1, 7 peraltes (hacia la izquierda)' },
-  { id: 'e1m', from: [0.655, 5.495], to: [0.655, 6.405], z0: -1.194, z1: -1.706,
-    width: ESC.ANCHO, note: 'la vuelta, 3 peraltes (sin descanso plano)' },
-  { id: 'e1b', from: [1.11, 6.405], to: [3.07, 6.405], z0: -1.706, z1: Z.N1,
-    width: ESC.ANCHO, note: 'tramo 2, 7 peraltes (hacia la derecha)' },
+  // N0 -> N1 : en U dentro del prisma, con descanso al fondo. Bajas por el
+  // lado sur hacia el poniente, das la vuelta a la DERECHA y sigues bajando
+  // hacia el oriente. 17 peraltes de 17.06 cm y huellas de 25 cm.
+  { id: 'e1a', from: [3.32, 5.495], to: [1.32, 5.495], z0: Z.N0, z1: -1.535,
+    width: ESC.ANCHO, note: 'tramo 1, 9 peraltes (hacia la izquierda)' },
+  { id: 'e1l', landing: rect(0.20, 5.04, 1.32, 6.86), z: -1.535,
+    note: 'descanso 1.12' },
+  { id: 'e1b', from: [1.32, 6.405], to: [3.07, 6.405], z0: -1.535, z1: Z.N1,
+    width: ESC.ANCHO, note: 'tramo 2, 8 peraltes (hacia la derecha)' },
 
   // N1 -> N2 : tramo recto hacia el sur, entre muros. Al minimo de reglamento:
   // 17 peraltes de 17.06 cm y huellas de 25 cm, o sea 4.00 de desarrollo.
