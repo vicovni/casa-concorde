@@ -16,7 +16,10 @@ const EYE = 1.62;
 const RADIUS = 0.22;
 const STEP_UP = 0.55;
 const GRAVITY = 18;
-const SOFFIT = 0.45;      // espesor aparente de la losa de escalera
+// Altura de cada escalon cuando la escalera va sin relleno: alcanza para que
+// un escalon se encime con el siguiente y el conjunto se lea como una
+// escalera maciza por debajo, no como tablas flotando.
+const ESCALON = 0.30;
 
 export class Viewer {
   constructor(canvas, ui, variantes = [{ id: 'actual', nombre: 'Actual', parche: {} }]) {
@@ -201,9 +204,9 @@ export class Viewer {
         // El escalon no baja macizo hasta el piso: lleva el espesor de la losa
         // inclinada, para que debajo de la escalera quede el paso que existe en
         // la casa real.
-        // Las dos escaleras de la casa son solidas: el escalon baja macizo
-        // hasta el piso. Solo una escalera marcada como volada usa el sofito.
-        const h = s.volada ? Math.min(SOFFIT, st.zTop - zMin) : st.zTop - zMin;
+        // Con relleno el escalon baja macizo hasta el piso; sin relleno es un
+        // prisma de altura fija y debajo queda el paso libre.
+        const h = s.sinRelleno ? Math.min(ESCALON, st.zTop - zMin) : st.zTop - zMin;
         const stepMats = [
           this.M.stepRiser, this.M.stepRiser, this.M.stepTread,
           this.M.stepRiser, this.M.stepRiser, this.M.stepRiser,

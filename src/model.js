@@ -498,16 +498,18 @@ export function buildHouse(parche = {}) {
      ==================================================================== */
   const e1 = ESC.e1;
   const STAIRS = [
-    // N0 -> N1 : en U dentro del prisma, con descanso al fondo. Bajas por el
+    // N0 -> N1 : en U dentro del prisma, con descanso al fondo. Va SIN relleno
+    // (cada escalon es un prisma) para dejar libre el paso que hay debajo.
+    // Bajas por el
     // lado sur hacia el poniente, das la vuelta a la DERECHA y sigues bajando
     // hacia el oriente. 17 peraltes de 17.06 cm y huellas de 25 cm.
     { id: 'e1a', from: [e1.xTop, e1.yIda], to: [e1.xTurn, e1.yIda],
-      z0: Z.N0, z1: e1.zDescanso, width: ESC.ancho,
+      z0: Z.N0, z1: e1.zDescanso, width: ESC.ancho, sinRelleno: true,
       note: 'tramo 1, 9 peraltes (hacia la izquierda)' },
     { id: 'e1l', z: e1.zDescanso, note: 'descanso',
       landing: rect(e1.descansoX0, fP('Y_BAND_S'), e1.xTurn, fN('Y_N1_N')) },
     { id: 'e1b', from: [e1.xTurn, e1.yVuelta], to: [e1.xBot, e1.yVuelta],
-      z0: e1.zDescanso, z1: Z.N1, width: ESC.ancho,
+      z0: e1.zDescanso, z1: Z.N1, width: ESC.ancho, sinRelleno: true,
       note: 'tramo 2, 8 peraltes (hacia la derecha)' },
 
     // N1 -> N2 : tramo recto hacia el sur, entre muros. 13 escalones
