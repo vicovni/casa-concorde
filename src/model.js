@@ -349,12 +349,9 @@ export function buildHouse(parche = {}) {
         vanos: [paso(e2.x - e2w, e2.x + e2w), puerta(7.20, 8.60, 2.40)],
       }),
       muroX('n1.ext-poniente', 'XW', sSala, 'Y_N1_N', { t: T.EXT, kind: 'ext' }),
-      muroY('n1.ext-norte', 'Y_N1_N', O.w, O.e, {
-        t: T.EXT, kind: 'ext', vanos: [ventana(6.60, 9.30)],
-      }),
-      muroX('n1.ext-oriente', 'XE', sSala, 'Y_N1_N', {
-        t: T.EXT, kind: 'ext', vanos: [ventana(4.60, 6.40)],
-      }),
+      // Sin ventanas: atras no hay nada mas que el cerro
+      muroY('n1.ext-norte', 'Y_N1_N', O.w, O.e, { t: T.EXT, kind: 'ext' }),
+      muroX('n1.ext-oriente', 'XE', sSala, 'Y_N1_N', { t: T.EXT, kind: 'ext' }),
 
       /* ---- interiores ---- */
       // sala | cocina: este muro esta 0.72 mas al sur que el de los otros tres.
