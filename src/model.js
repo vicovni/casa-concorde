@@ -69,7 +69,9 @@ const BASE = {
     ancho: 0.91,
     e1: { xTop: 3.32, xTurn: 1.32, xBot: 3.07, yIda: 5.495, yVuelta: 6.405,
           zDescanso: -1.535, descansoX0: 0.20 },
-    e2: { x: 5.405, yTop: 3.50, yBot: -0.50, holgura: 0.06, muro: 0.10 },
+    // 13 escalones contados en la casa (14 peraltes) y huella de 0.25: el
+    // desarrollo sale de ahi, no al reves.
+    e2: { x: 5.405, yBot: -0.50, peraltes: 14, huella: 0.25, holgura: 0.06, muro: 0.10 },
   },
 };
 
@@ -148,7 +150,9 @@ export function stairSteps(s) {
   if (s.landing) return null;
   const dz = s.z1 - s.z0;
   const len = Math.hypot(s.to[0] - s.from[0], s.to[1] - s.from[1]);
-  const n = Math.max(2, Math.ceil(Math.abs(dz) / 0.18));   // num de peraltes
+  // Si la escalera trae peraltes contados en obra, mandan esos; si no, se
+  // calculan para no pasarse de 18 cm.
+  const n = s.peraltes ?? Math.max(2, Math.ceil(Math.abs(dz) / 0.18));
   const riser = dz / n;
   const ux = (s.to[0] - s.from[0]) / len, uy = (s.to[1] - s.from[1]) / len;
   const stepLen = len / (n - 1);
@@ -246,7 +250,8 @@ export function buildHouse(parche = {}) {
   const sSala = fN('Y_SALA_S');                    // cara exterior sur de la sala
 
   // Caja de la escalera a los cuartos
-  const e2 = ESC.e2;
+  const e2 = { ...ESC.e2 };
+  e2.yTop = e2.yBot + (e2.peraltes - 1) * e2.huella;   // cabecera en la sala
   const e2w = ESC.ancho / 2 + e2.holgura;          // medio hueco en la losa
   const e2m = ESC.ancho / 2 + e2.holgura + e2.muro / 2;   // eje de sus muros
 
@@ -505,11 +510,11 @@ export function buildHouse(parche = {}) {
       z0: e1.zDescanso, z1: Z.N1, width: ESC.ancho,
       note: 'tramo 2, 8 peraltes (hacia la derecha)' },
 
-    // N1 -> N2 : tramo recto hacia el sur, entre muros. Al minimo de
-    // reglamento: 17 peraltes de 17.06 cm y huellas de 25 cm (4.00 de
-    // desarrollo). Le sobresalen 2 escalones dentro del pasillo.
+    // N1 -> N2 : tramo recto hacia el sur, entre muros. 13 escalones
+    // contados en la casa, o sea 14 peraltes de 20.7 cm con huellas de 25:
+    // sale empinada, pero es lo que hay. Le sobresalen 2 dentro del pasillo.
     { id: 'e2', from: [e2.x, e2.yTop], to: [e2.x, e2.yBot],
-      z0: Z.N1, z1: Z.N2, width: ESC.ancho, rail: false,
+      z0: Z.N1, z1: Z.N2, width: ESC.ancho, rail: false, peraltes: e2.peraltes,
       note: 'sala -> recamaras, entre muros' },
   ];
 
