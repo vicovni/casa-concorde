@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {
-  LEVELS, LEVEL_BY_ID, STAIRS, SITE, Z, H, T,
+  buildHouse, Z, H, T,
   wallPieces, pieceRect, pointInPoly, stairSteps, polyBBox,
 } from './model.js';
 import { buildMaterials } from './materials.js';
@@ -19,9 +19,12 @@ const GRAVITY = 18;
 const SOFFIT = 0.45;      // espesor aparente de la losa de escalera
 
 export class Viewer {
-  constructor(canvas, ui) {
+  constructor(canvas, ui, variantes = [{ id: 'actual', nombre: 'Actual', parche: {} }]) {
     this.canvas = canvas;
     this.ui = ui;
+    this.variantes = variantes;
+    this.iVariante = 0;
+    this.D = buildHouse(variantes[0].parche);   // datos de la casa en turno
     this.colliders = [];     // {x0,x1,z0,z1,y0,y1} en mundo
     this.surfaces = [];      // superficies caminables
     this.ramps = [];
@@ -39,6 +42,11 @@ export class Viewer {
 
     this.camera = new THREE.PerspectiveCamera(72, 1, 0.05, 400);
     this.M = buildMaterials();
+
+    // Todo lo que arma la casa cuelga de este grupo, para poder tirarlo y
+    // volverlo a construir al cambiar de variante. Las luces no van aqui.
+    this.casa = new THREE.Group();
+    this.scene.add(this.casa);
 
     this._lights();
     this._build();
@@ -111,7 +119,7 @@ export class Viewer {
     const m = new THREE.Mesh(geo, mat);
     m.position.y = def.z - def.t;
     m.receiveShadow = true; m.castShadow = true;
-    this.scene.add(m);
+    this.casa.add(m);
     return m;
   }
 
@@ -148,7 +156,7 @@ export class Viewer {
       const m = new THREE.Mesh(geo, mat);
       m.position.set(r.x + r.w / 2, base + h / 2, -(r.y + r.h / 2));
       m.castShadow = true; m.receiveShadow = true;
-      this.scene.add(m);
+      this.casa.add(m);
       // colision solo donde estorba al cuerpo
       this._addCollider(r.x, r.x + r.w, r.y, r.y + r.h, base, base + h);
     }
@@ -166,20 +174,20 @@ export class Viewer {
         const g = new THREE.BoxGeometry(sx, o.y1 - o.y0, sy);
         const m = new THREE.Mesh(g, this.M.glass);
         m.position.set(cx, levelZ + (o.y0 + o.y1) / 2, -cy);
-        this.scene.add(m);
+        this.casa.add(m);
       }
     }
   }
 
   _stairs() {
-    for (const s of STAIRS) {
+    for (const s of this.D.STAIRS) {
       if (s.landing) {
         const bb = polyBBox(s.landing);
         const geo = new THREE.BoxGeometry(bb.x1 - bb.x0, 0.25, bb.y1 - bb.y0);
         const m = new THREE.Mesh(geo, this.M.stepTread);
         m.position.set((bb.x0 + bb.x1) / 2, s.z - 0.125, -(bb.y0 + bb.y1) / 2);
         m.castShadow = true; m.receiveShadow = true;
-        this.scene.add(m);
+        this.casa.add(m);
         this._addSurface(s.landing, [], s.z);
         continue;
       }
@@ -193,7 +201,9 @@ export class Viewer {
         // El escalon no baja macizo hasta el piso: lleva el espesor de la losa
         // inclinada, para que debajo de la escalera quede el paso que existe en
         // la casa real.
-        const h = Math.min(SOFFIT, st.zTop - zMin);
+        // Las dos escaleras de la casa son solidas: el escalon baja macizo
+        // hasta el piso. Solo una escalera marcada como volada usa el sofito.
+        const h = s.volada ? Math.min(SOFFIT, st.zTop - zMin) : st.zTop - zMin;
         const stepMats = [
           this.M.stepRiser, this.M.stepRiser, this.M.stepTread,
           this.M.stepRiser, this.M.stepRiser, this.M.stepRiser,
@@ -201,7 +211,7 @@ export class Viewer {
         const m = new THREE.Mesh(new THREE.BoxGeometry(sx, h, sy), stepMats);
         m.position.set(cx, zMin + h / 2, -cy);
         m.castShadow = true; m.receiveShadow = true;
-        this.scene.add(m);
+        this.casa.add(m);
 
         // narices: bajando, la escalera solo ensena huellas y sin una linea en
         // el filo se lee como rampa lisa
@@ -210,7 +220,7 @@ export class Viewer {
         const nose = new THREE.Mesh(
           new THREE.BoxGeometry(nx2, 0.02, ny2), this.M.stepNose);
         nose.position.set(st.x1 - g.ux * 0.025, st.zTop + 0.011, -(st.y1 - g.uy * 0.025));
-        this.scene.add(nose);
+        this.casa.add(nose);
       }
       // rampa invisible para caminar
       const bbx = {
@@ -233,14 +243,14 @@ export class Viewer {
         rail.quaternion.setFromUnitVectors(
           new THREE.Vector3(1, 0, 0), dir.clone().normalize());
         rail.castShadow = true;
-        this.scene.add(rail);
+        this.casa.add(rail);
         for (let i = 0; i <= 4; i++) {
           const t = i / 4;
           const p = new THREE.Vector3().lerpVectors(p0, p1, t);
           const post = new THREE.Mesh(
             new THREE.BoxGeometry(0.04, 0.95, 0.04), this.M.frame);
           post.position.set(p.x, p.y - 0.475, p.z);
-          this.scene.add(post);
+          this.casa.add(post);
         }
       }
     }
@@ -254,13 +264,13 @@ export class Viewer {
       const m = new THREE.Mesh(geo, mat);
       m.position.y = z - 0.4;
       m.receiveShadow = true;
-      this.scene.add(m);
+      this.casa.add(m);
       this._addSurface(poly, [], z);
     };
-    add(SITE.street.poly, SITE.street.z, this.M.asphalt);
-    add(SITE.groundLow.poly, SITE.groundLow.z, this.M.grass);
-    add(SITE.groundSideW.poly, SITE.groundSideW.z, this.M.grass);
-    add(SITE.groundSideE.poly, SITE.groundSideE.z, this.M.grass);
+    add(this.D.SITE.street.poly, this.D.SITE.street.z, this.M.asphalt);
+    add(this.D.SITE.groundLow.poly, this.D.SITE.groundLow.z, this.M.grass);
+    add(this.D.SITE.groundSideW.poly, this.D.SITE.groundSideW.z, this.M.grass);
+    add(this.D.SITE.groundSideE.poly, this.D.SITE.groundSideE.z, this.M.grass);
 
     // masa del cerro a los lados y atras, hasta el nivel de calle
     const hill = (x0, y0, x1, y1) => {
@@ -268,7 +278,7 @@ export class Viewer {
         new THREE.BoxGeometry(x1 - x0, Math.abs(Z.N2) + 0.4, y1 - y0), this.M.grass);
       m.position.set((x0 + x1) / 2, (Z.N0 - (Z.N2 - 0.4)) / 2 + Z.N2 - 0.4, -(y0 + y1) / 2);
       m.receiveShadow = true;
-      this.scene.add(m);
+      this.casa.add(m);
       this._addSurface([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], [], Z.N0);
     };
     hill(-14, 0, 0, 15);
@@ -277,7 +287,7 @@ export class Viewer {
   }
 
   _build() {
-    for (const lv of LEVELS) {
+    for (const lv of this.D.LEVELS) {
       const mat = lv.id === 'N0' ? this.M.concrete : this.M.concrete;
       this._slabMesh(lv.slab, mat);
       this._addSurface(lv.slab.outline, lv.slab.holes, lv.slab.z);
@@ -307,19 +317,19 @@ export class Viewer {
         const m = new THREE.Mesh(g, mat);
         m.position.y = lv.z + 0.012;
         m.receiveShadow = true;
-        this.scene.add(m);
+        this.casa.add(m);
 
         // plafon (cara inferior de la losa superior) en espacios techados
         if (lv.id !== 'N0' && r.kind !== 'patio' && r.kind !== 'exterior'
             && r.kind !== 'stairs' && r.kind !== 'lawn') {
-          const holes = lv.id === 'N1' ? LEVEL_BY_ID.N0.slab.holes
-            : [...(lv.roofSlab ? lv.roofSlab.holes : []), ...LEVEL_BY_ID.N1.slab.holes];
+          const holes = lv.id === 'N1' ? this.D.LEVEL_BY_ID.N0.slab.holes
+            : [...(lv.roofSlab ? lv.roofSlab.holes : []), ...this.D.LEVEL_BY_ID.N1.slab.holes];
           const cg = this._slabFace(bb, holes);
           cg.rotateX(-Math.PI / 2);
           const cm = new THREE.Mesh(cg, this.M.ceiling);
           cm.position.y = lv.z + H.FLOOR - 0.012;
           cm.receiveShadow = true;
-          this.scene.add(cm);
+          this.casa.add(cm);
         }
       }
     }
@@ -328,7 +338,34 @@ export class Viewer {
     // todo lo que no es construccion va en un solo grupo, para poder apagarlo
     this.furniture = buildFurniture(this.M);
     this.furniture.visible = false;     // arranca en obra gris; la tecla M lo enciende
-    this.scene.add(this.furniture);
+    this.casa.add(this.furniture);
+  }
+
+  /* --------------------------- variantes -------------------------- */
+  /** Tira la casa en turno y arma otra. Los muebles se rehacen tambien. */
+  setVariante(i) {
+    const n = ((i % this.variantes.length) + this.variantes.length) % this.variantes.length;
+    this.iVariante = n;
+    const vari = this.variantes[n];
+
+    this.casa.traverse((o) => {
+      if (o.isMesh || o.isLine) {
+        o.geometry?.dispose();
+        // los materiales se comparten entre variantes, no se tiran
+      }
+    });
+    this.casa.clear();
+    this.colliders.length = 0;
+    this.surfaces.length = 0;
+    this.ramps.length = 0;
+
+    this.D = buildHouse(vari.parche);
+    this._build();
+    this.toggleFurniture(this.furniture.visible);
+    this.teleport('N1');
+    if (this.ui.variantes) this.ui.variantes.value = String(n);
+    if (this.ui.nota) this.ui.nota.textContent = vari.nota || '';
+    return vari;
   }
 
   /* --------------------------- navegacion ------------------------- */
@@ -342,6 +379,7 @@ export class Viewer {
       if (e.code === 'KeyO') this.toggleOrbit();
       if (e.code === 'KeyC') this.collide = !this.collide;
       if (e.code === 'KeyM') this.toggleFurniture();
+      if (e.code === 'KeyV') this.setVariante(this.iVariante + (e.shiftKey ? -1 : 1));
       if (e.code === 'KeyH') this.ui.help.classList.toggle('hidden');
       if (e.code === 'Escape' && this.active && !this.locked()) this.exit();
     });
@@ -366,6 +404,14 @@ export class Viewer {
     this.canvas.addEventListener('click', enter);
     this.ui.overlay.addEventListener('click', enter);
     this.ui.start.addEventListener('click', enter);
+    if (this.ui.variantes) {
+      this.ui.variantes.addEventListener('change', (e) => {
+        e.stopPropagation();
+        this.setVariante(Number(this.ui.variantes.value));
+        this.ui.variantes.blur();
+      });
+      this.ui.variantes.addEventListener('click', (e) => e.stopPropagation());
+    }
     if (this.ui.muebles) {
       this.ui.muebles.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -396,6 +442,14 @@ export class Viewer {
   /** Enciende o apaga todo lo que no es construccion (muebles, coches, macetas). */
   toggleFurniture(on = !this.furniture.visible) {
     this.furniture.visible = on;
+    if (this.ui.variantes) {
+      this.ui.variantes.addEventListener('change', (e) => {
+        e.stopPropagation();
+        this.setVariante(Number(this.ui.variantes.value));
+        this.ui.variantes.blur();
+      });
+      this.ui.variantes.addEventListener('click', (e) => e.stopPropagation());
+    }
     if (this.ui.muebles) {
       this.ui.muebles.textContent = on ? 'Ocultar muebles (M)' : 'Mostrar muebles (M)';
       this.ui.muebles.classList.toggle('on', on);
@@ -534,7 +588,7 @@ export class Viewer {
     const feet = this.pos.y - EYE;
     let name = 'Exterior', lvl = '';
     let bestD = Infinity;
-    for (const lv of LEVELS) {
+    for (const lv of this.D.LEVELS) {
       const d = Math.abs(lv.z - feet);
       if (d > 1.6) continue;
       for (const r of lv.rooms) {

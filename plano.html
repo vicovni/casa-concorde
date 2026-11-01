@@ -10,6 +10,10 @@
   header { padding:22px 28px 10px; }
   h1 { margin:0; font-size:22px; }
   header p { margin:6px 0 0; color:#60666c; font-size:13.5px; max-width:70ch; line-height:1.6; }
+  #variantes { font:inherit; font-size:13px; padding:8px 10px; border-radius:8px;
+    border:1px solid #c9c4ba; background:#fff; color:#23262a; margin-left:10px; cursor:pointer; }
+  #nota { display:block; margin-top:10px; max-width:70ch; font-size:12.5px; color:#7a8088; line-height:1.6; }
+  #nota:empty { display:none; }
   .top a { display:inline-block; margin-top:12px; font-size:13px; color:#fff;
     background:#2f3a44; padding:8px 14px; border-radius:8px; text-decoration:none; }
   .levels { display:flex; gap:22px; padding:18px 28px 40px; align-items:flex-start;
@@ -34,7 +38,8 @@
   <p>Generado a partir del modelo paramétrico (<code>src/model.js</code>). El norte (la calle
      Cto Concorde) queda arriba, igual que en la vista satelital. Las cotas en rojo son las
      medidas que diste; el resto está inferido.</p>
-  <div class="top"><a href="index.html">Recorrer en 3D →</a></div>
+  <div class="top"><a href="index.html">Recorrer en 3D →</a><select id="variantes"></select>
+    <span id="nota"></span></div>
 </header>
 <div class="legend">
   <span><i style="background:#3a3a3a"></i>muro</span>
@@ -99,13 +104,26 @@
 
 <script type="module">
   import { renderAll } from '/src/plan2d.js';
+  import { VARIANTES } from '/src/variantes.js';
   const host = document.getElementById('levels');
-  for (const l of renderAll()) {
-    const d = document.createElement('div');
-    d.className = 'lv';
-    d.innerHTML = `<h2>${l.name}</h2><p class="z">piso terminado ${l.z.toFixed(2)} m</p>${l.svg}`;
-    host.appendChild(d);
+  const sel = document.getElementById('variantes');
+  const nota = document.getElementById('nota');
+  sel.innerHTML = VARIANTES
+    .map((v, i) => '<option value="' + i + '">' + v.nombre + '</option>').join('');
+
+  function dibuja(i) {
+    const vari = VARIANTES[i];
+    host.innerHTML = '';
+    for (const l of renderAll(vari.parche)) {
+      const d = document.createElement('div');
+      d.className = 'lv';
+      d.innerHTML = `<h2>${l.name}</h2><p class="z">piso terminado ${l.z.toFixed(2)} m</p>${l.svg}`;
+      host.appendChild(d);
+    }
+    nota.textContent = vari.nota || '';
   }
+  sel.addEventListener('change', () => dibuja(Number(sel.value)));
+  dibuja(0);
 </script>
 </body>
 </html>

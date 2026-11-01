@@ -172,3 +172,9 @@ node tools/prueba-variante.mjs
 
 `tools/huella-base.txt` guarda la huella buena: si un cambio no debía mover
 nada, `diff` contra ese archivo lo confirma.
+
+### Cambiar de variante
+
+En el recorrido 3D: tecla **`V`** (con `Shift` va hacia atrás) o el selector de
+arriba a la izquierda. En el plano 2D: el selector junto al botón de "Recorrer
+en 3D". Las variantes se declaran en `src/variantes.js`.

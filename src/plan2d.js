@@ -2,7 +2,7 @@
    PLANO 2D — genera SVG a partir de src/model.js
    ========================================================================== */
 import {
-  LEVELS, STAIRS, wallPieces, pieceRect, polyBBox, polyArea, stairSteps, AX,
+  buildHouse, wallPieces, pieceRect, polyBBox, polyArea, stairSteps,
 } from './model.js';
 
 const PPM = 46;          // pixeles por metro
@@ -31,7 +31,7 @@ function levelBBox(level) {
   return { x0: x0 - PAD, y0: y0 - PAD, x1: x1 + PAD, y1: y1 + PAD };
 }
 
-function stairsForLevel(id) {
+function stairsForLevel(id, STAIRS) {
   if (id === 'N0') return STAIRS.filter((s) => s.id.startsWith('e1'));
   if (id === 'N1') return STAIRS;
   return STAIRS.filter((s) => s.id === 'e2');
@@ -83,7 +83,7 @@ function dimLine(d, X, Y) {
 }
 
 /* ------------------------------------------------------------------ */
-export function renderLevel(level) {
+export function renderLevel(level, STAIRS) {
   const bb = levelBBox(level);
   const Wpx = (bb.x1 - bb.x0) * PPM;
   const Hpx = (bb.y1 - bb.y0) * PPM;
@@ -124,7 +124,7 @@ export function renderLevel(level) {
   }
 
   // escaleras
-  for (const s of stairsForLevel(level.id)) {
+  for (const s of stairsForLevel(level.id, STAIRS)) {
     if (s.landing) {
       out.push(`<polygon points="${polyPts(s.landing)}" fill="#f6f1e3" stroke="#b9ae92" stroke-width="0.8"/>`);
       continue;
@@ -182,8 +182,9 @@ export function renderLevel(level) {
   return out.join('\n');
 }
 
-export function renderAll() {
-  return LEVELS.map((l) => ({
-    id: l.id, name: l.name, z: l.z, svg: renderLevel(l),
+export function renderAll(parche = {}) {
+  const casa = buildHouse(parche);
+  return casa.LEVELS.map((l) => ({
+    id: l.id, name: l.name, z: l.z, svg: renderLevel(l, casa.STAIRS),
   }));
 }
