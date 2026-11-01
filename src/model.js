@@ -59,11 +59,7 @@ export const AX = {
   // --- Y nivel intermedio ---
   Y_SALA_S: 0.10,   // fachada sur de la sala, vidrio piso-techo (0.00 / 0.20)
   Y_COC_S:  4.26,   // sala | cocina   (4.20 / 4.32) -> cocina de 3.60 de fondo
-  Y_BAND_S: 4.98,   // sala | medio bano y zotehuela (4.92 / 5.04)
-  // El bloque de escaleras es 0.92 mas profundo que esos dos: los dos tramos
-  // de 0.91 llenan 1.82 y hace falta una franja libre al sur para poder salir
-  // del pie de la escalera hacia la sala.
-  Y_ESC_S:  4.06,   // sala | escaleras (4.00 / 4.12)
+  Y_BAND_S: 4.98,   // sala | escaleras, medio bano y zotehuela (4.92 / 5.04)
   Y_N1_N:   6.96,   // muro exterior norte, recto para los cuatro (6.86 / 7.06)
   Y_PRISM_S: 4.98,  // muro sur del prisma de escaleras en la cochera (4.92 / 5.04)
 
@@ -165,9 +161,9 @@ const N1 = {
   },
   rooms: [
     { name: 'Sala', kind: 'living', dim: '9.64 x 4.00 (4.72 fuera de la cocina)',
-      poly: [[0.20, 0.20], [9.84, 0.20], [9.84, 4.20], [6.34, 4.20],
-             [6.34, 4.92], [3.36, 4.92], [3.36, 4.00], [0.20, 4.00]] },
-    { name: 'Vestibulo / escaleras', poly: rect(0.20, 4.12, 3.36, 6.86), kind: 'hall' },
+      poly: [[0.20, 0.20], [9.84, 0.20], [9.84, 4.20],
+             [6.34, 4.20], [6.34, 4.92], [0.20, 4.92]] },
+    { name: 'Vestibulo / escaleras', poly: rect(0.20, 5.04, 3.36, 6.86), kind: 'hall' },
     { name: 'Medio bano', poly: rect(3.48, 5.04, 4.56, 6.86), kind: 'bath' },
     { name: 'Zotehuela', poly: rect(4.68, 5.04, 6.22, 6.86), kind: 'patio',
       dim: '1.54 x 1.82' },
@@ -184,20 +180,16 @@ const N1 = {
     /* ---- interiores ---- */
     // sala | cocina: este muro esta 0.72 mas al sur que el de los otros tres
     W(A.X_COC, A.Y_COC_S, 10.04, A.Y_COC_S, T.INT, H.FLOOR, 'int', [
-      pass(0.90, 3.20),     // cocina abierta a la sala
+      door(0.12, 1.02),     // puerta a la sala, del lado izquierdo vista de frente
     ]),
-    // sala | escaleras: la salida queda al pie de la escalera, girando a la
-    // derecha se sale directo a la sala
-    W(0, A.Y_ESC_S, A.X_VEST, A.Y_ESC_S, T.INT, H.FLOOR, 'int', [
-      pass(2.40, 3.36),
-    ]),
-    // sala | medio bano y zotehuela
-    W(A.X_VEST, A.Y_BAND_S, A.X_COC, A.Y_BAND_S, T.INT, H.FLOOR, 'int', [
-      door(0.18, 1.02),     // medio bano
-      door(1.53, 2.53),     // zotehuela
+    // sala | escaleras, medio bano y zotehuela. La zotehuela NO da a la sala:
+    // solo se entra a ella desde la cocina.
+    W(0, A.Y_BAND_S, A.X_COC, A.Y_BAND_S, T.INT, H.FLOOR, 'int', [
+      pass(2.40, 3.36),     // salida del vestibulo, al pie de la escalera
+      door(3.60, 4.44),     // medio bano
     ]),
     // divisiones de la banda
-    W(A.X_VEST, A.Y_ESC_S, A.X_VEST, A.Y_N1_N, T.INT, H.FLOOR, 'int'),
+    W(A.X_VEST, A.Y_BAND_S, A.X_VEST, A.Y_N1_N, T.INT, H.FLOOR, 'int'),
     W(A.X_MB, A.Y_BAND_S, A.X_MB, A.Y_N1_N, T.INT, H.FLOOR, 'int'),
     W(A.X_COC, A.Y_COC_S, A.X_COC, A.Y_N1_N, T.INT, H.FLOOR, 'int', [
       door(1.50, 2.34),     // acceso cocina -> zotehuela
