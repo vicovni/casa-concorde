@@ -121,3 +121,54 @@ Ambas de 0.91 de ancho y 17 peraltes de 17.1 cm (el RCDF pide peralte máximo
    m. Ya es caminable, pero es el punto de esa esquina que menos me convence.
 5. **Altura de entrepiso:** si no es 2.90, cambian los desarrollos de ambas
    escaleras y el tamaño del prisma.
+
+## El modelo es paramétrico
+
+`src/model.js` no tiene geometría escrita a mano: todo sale de los **ejes**.
+Cada eje es la línea de centro de un muro más su espesor, y de sus caras
+salen las medidas interiores:
+
+```js
+X_VEST: { at: 3.42, t: 0.12, nota: 'escaleras (3.16) | medio bano' }
+```
+
+Un cuarto se declara por los cuatro ejes que lo encierran, no por coordenadas:
+
+```js
+cuarto('n1.mediobano', 'Medio bano', 'bath',
+       { w: 'X_VEST', e: 'X_MB', s: 'Y_BAND_S', n: 'Y_N1_N' })
+```
+
+Mover un eje recalcula solo los cuartos, muros, puertas, huecos de losa y
+cotas que dependen de él. Las puertas van en **coordenadas absolutas**, así
+que se quedan donde están aunque el muro cambie de largo.
+
+Cada muro y cada cuarto tienen un **id** estable (`n1.sala-cocina`,
+`n2.rec1`), para poder referirse a ellos sin depender de su posición en la
+lista.
+
+### Variantes
+
+`buildHouse(parche)` arma la casa. El parche solo declara diferencias, así
+que una variante hereda todo lo que no toca:
+
+```js
+buildHouse({
+  nombre: 'Cocina más grande',
+  ejes:    { Y_BAND_S: 4.26 },     // mueve un muro
+  cuartos: { 'n1.mediobano': null } // lo elimina
+});
+```
+
+Si después corriges una medida de la base, la corrección aparece sola en
+todas las variantes — salvo en lo que la variante haya tocado explícitamente.
+
+### Herramientas
+
+```bash
+node tools/huella.mjs        # huella de la geometría, para comparar refactors
+node tools/prueba-variante.mjs
+```
+
+`tools/huella-base.txt` guarda la huella buena: si un cambio no debía mover
+nada, `diff` contra ese archivo lo confirma.
