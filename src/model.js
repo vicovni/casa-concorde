@@ -181,12 +181,16 @@ function mergeEjes(base, parche = {}) {
   return out;
 }
 
-/** Aplica altas, bajas y cambios por id sobre una lista con `id`. */
-function patchById(lista, parche = {}) {
+/** Aplica altas, bajas y cambios por id sobre una lista con `id`.
+ *  `prefijo` evita que el parche de un nivel se cuele en los demas: solo se
+ *  dan de alta los ids que le pertenecen. */
+function patchById(lista, parche = {}, prefijo = null) {
   let out = lista.filter((it) => parche[it.id] !== null);
   out = out.map((it) => (parche[it.id] ? { ...it, ...parche[it.id] } : it));
   for (const [id, v] of Object.entries(parche)) {
-    if (v && !lista.some((it) => it.id === id)) out.push({ id, ...v });
+    if (!v || lista.some((it) => it.id === id)) continue;
+    if (prefijo && !id.startsWith(prefijo)) continue;
+    out.push({ id, ...v });
   }
   return out;
 }
@@ -528,17 +532,20 @@ export function buildHouse(parche = {}) {
   };
 
   /* --- parches por id --------------------------------------------------- */
-  const LEVELS = [N0, N1, N2].map((lv) => ({
-    ...lv,
-    rooms: patchById(lv.rooms, (parche.cuartos || {})),
-    walls: patchById(lv.walls, (parche.muros || {})),
-    parapets: lv.parapets ? patchById(lv.parapets, (parche.muros || {})) : undefined,
-  }));
+  const LEVELS = [N0, N1, N2].map((lv) => {
+    const pre = lv.id.toLowerCase() + '.';
+    return {
+      ...lv,
+      rooms: patchById(lv.rooms, parche.cuartos || {}, pre),
+      walls: patchById(lv.walls, parche.muros || {}, pre),
+      parapets: lv.parapets ? patchById(lv.parapets, parche.muros || {}, pre) : undefined,
+    };
+  });
 
   // AX plano (solo lineas de centro), que es lo que consume el plano 2D
   const AX = Object.fromEntries(Object.entries(EJ).map(([k, v]) => [k, v.at]));
 
-  return {
+  const casa = {
     T, H, Z, ESC, AX, EJES: EJ, SITE,
     STAIRS: patchById(STAIRS, (parche.escaleras || {}).tramos || {}),
     LEVELS,
@@ -549,6 +556,18 @@ export function buildHouse(parche = {}) {
       anchoInterior: fN('XE') - fP('XW'),
     },
   };
+
+  // Mover ejes y borrar piezas por id alcanza para la mayoria de los cambios,
+  // pero una variante que agrega volumenes nuevos necesita construir. Para eso
+  // puede traer una funcion "extra", que recibe la casa ya armada y las mismas
+  // herramientas con que se armo.
+  if (typeof parche.extra === 'function') {
+    parche.extra(casa, {
+      cuarto, muroX, muroY, puerta, paso, ventana, vano,
+      cl, th, fP, fN, rect, O, T, H, Z, EJ,
+    });
+  }
+  return casa;
 }
 
 /* --------------------------------------------------------------------------

@@ -126,12 +126,11 @@ export class Viewer {
     return m;
   }
 
-  /** Cara plana (piso o plafon) de un rectangulo, restando los huecos de losa. */
-  _slabFace(bb, holes) {
-    const shape = new THREE.Shape([
-      new THREE.Vector2(bb.x0, bb.y0), new THREE.Vector2(bb.x1, bb.y0),
-      new THREE.Vector2(bb.x1, bb.y1), new THREE.Vector2(bb.x0, bb.y1),
-    ]);
+  /** Cara plana (piso o plafon) de un cuarto, restando los huecos de losa.
+   *  Sigue el poligono real: un cuarto en L no pinta piso fuera de el. */
+  _slabFace(poly, holes) {
+    const bb = polyBBox(poly);
+    const shape = new THREE.Shape(poly.map(([x, y]) => new THREE.Vector2(x, y)));
     for (const h of (holes || [])) {
       const hb = polyBBox(h);
       const x0 = Math.max(bb.x0, hb.x0), x1 = Math.min(bb.x1, hb.x1);
@@ -318,7 +317,7 @@ export class Viewer {
           stairs: this.M.floorTile, lawn: this.M.lawn,
         })[r.kind] || this.M.floorTile;
         const bb = polyBBox(r.poly);
-        const g = this._slabFace(bb, lv.slab.holes);
+        const g = this._slabFace(r.poly, lv.slab.holes);
         g.rotateX(-Math.PI / 2);
         const m = new THREE.Mesh(g, mat);
         m.position.y = lv.z + 0.012;
@@ -330,7 +329,7 @@ export class Viewer {
             && r.kind !== 'stairs' && r.kind !== 'lawn') {
           const holes = lv.id === 'N1' ? this.D.LEVEL_BY_ID.N0.slab.holes
             : [...(lv.roofSlab ? lv.roofSlab.holes : []), ...this.D.LEVEL_BY_ID.N1.slab.holes];
-          const cg = this._slabFace(bb, holes);
+          const cg = this._slabFace(r.poly, holes);
           cg.rotateX(-Math.PI / 2);
           const cm = new THREE.Mesh(cg, this.M.ceiling);
           cm.position.y = lv.z + H.FLOOR - 0.012;

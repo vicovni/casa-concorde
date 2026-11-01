@@ -178,3 +178,14 @@ nada, `diff` contra ese archivo lo confirma.
 En el recorrido 3D: tecla **`V`** (con `Shift` va hacia atrás) o el selector de
 arriba a la izquierda. En el plano 2D: el selector junto al botón de "Recorrer
 en 3D". Las variantes se declaran en `src/variantes.js`.
+
+### Lo que puede hacer un parche
+
+Mover ejes, y dar de alta, baja o cambiar cuartos, muros y tramos de escalera
+por su id. Para volúmenes nuevos que no salen de mover un eje, el parche puede
+traer una función `extra(casa, herramientas)` que recibe la casa ya armada y
+los mismos constructores con que se armó.
+
+La variante **1. Sala a doble altura** usa las dos cosas: parches por id para
+quitar la cocina, la zotehuela y el prisma, y `extra` para abrir la losa de la
+cochera, levantar los muros altos y ponerle techo.
