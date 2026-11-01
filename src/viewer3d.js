@@ -212,7 +212,10 @@ export class Viewer {
           this.M.stepRiser, this.M.stepRiser, this.M.stepRiser,
         ];
         const m = new THREE.Mesh(new THREE.BoxGeometry(sx, h, sy), stepMats);
-        m.position.set(cx, zMin + h / 2, -cy);
+        // El escalon cuelga de SU huella. Antes se apoyaba en el fondo del
+        // tramo, asi que sin relleno todos quedaban amontonados abajo y solo
+        // se veian las narices flotando.
+        m.position.set(cx, st.zTop - h / 2, -cy);
         m.castShadow = true; m.receiveShadow = true;
         this.casa.add(m);
 
