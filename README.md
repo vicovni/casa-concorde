@@ -189,3 +189,49 @@ los mismos constructores con que se armó.
 La variante **1. Sala a doble altura** usa las dos cosas: parches por id para
 quitar la cocina, la zotehuela y el prisma, y `extra` para abrir la losa de la
 cochera, levantar los muros altos y ponerle techo.
+
+## Desde el móvil
+
+El recorrido 3D trae controles táctiles: una **palanca** abajo a la izquierda
+para caminar, el **dedo sobre la pantalla** para mirar, y botones para saltar
+de nivel, la vista de maqueta, los muebles y la ayuda. Aparecen solos cuando
+el equipo no tiene mouse o la pantalla es angosta.
+
+El plano 2D apila los tres niveles en vertical y cada plano se ajusta al ancho.
+
+## Desplegar
+
+Es un **sitio estático**: no necesita node en el servidor. Todo lo que el
+navegador pide está en el repo, incluido Three.js en `vendor/`.
+
+Basta con servir la raíz del proyecto. Con nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name casa.midominio.com;
+    root /var/www/casa-concorde;
+    index index.html;
+
+    # Los módulos ES necesitan el tipo correcto
+    types { application/javascript js mjs; text/html html; image/svg+xml svg; }
+
+    location / { try_files $uri $uri/ =404; }
+}
+```
+
+Lo único que hay que respetar es que los `.js` se sirvan como
+`application/javascript`; si salen como `text/plain`, el navegador rechaza los
+módulos y la página queda en blanco.
+
+Para desarrollo local hay un servidor mínimo incluido:
+
+```bash
+node server.cjs
+```
+
+Si algún día se actualiza Three.js (`npm install`), hay que volver a copiarlo:
+
+```bash
+node tools/vendor.mjs
+```

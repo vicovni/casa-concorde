@@ -2,14 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0a0e12">
 <title>Casa Cto. Concorde — recorrido 3D</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
-  html,body { margin:0; height:100%; overflow:hidden;
+  html,body { margin:0; height:100%; overflow:hidden; overscroll-behavior:none;
+    -webkit-text-size-adjust:100%;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
-  canvas { display:block; width:100%; height:100%; }
+  canvas { display:block; width:100%; height:100%; touch-action:none; }
   .hidden { display:none !important; }
 
   #overlay { position:fixed; inset:0; display:grid; place-items:center;
@@ -48,6 +50,41 @@
     color:#8b98a4; background:rgba(16,21,26,.72); border-radius:8px; padding:6px 9px; }
   #nota:empty { display:none; }
 
+  /* ------- tactil / movil ------- */
+  /* Los controles tactiles no se muestran por media query: un portatil con
+     pantalla tactil tambien reporta touch. Se encienden desde JS cuando el
+     equipo no tiene mouse, cuando la pantalla es angosta, o al primer toque. */
+  #tactil { position:fixed; inset:0; z-index:4; pointer-events:none; display:none; }
+  #tactil.on { display:block; }
+  #palanca { position:absolute; left:calc(18px + env(safe-area-inset-left));
+    bottom:calc(18px + env(safe-area-inset-bottom)); width:124px; height:124px;
+    border-radius:50%; background:rgba(16,21,26,.42);
+    border:1px solid rgba(255,255,255,.18); pointer-events:auto; touch-action:none;
+    display:grid; place-items:center; }
+  #palanca i { width:48px; height:48px; border-radius:50%; background:rgba(230,236,241,.5);
+    border:1px solid rgba(255,255,255,.3); display:block; }
+  #botones { position:absolute; right:calc(14px + env(safe-area-inset-right));
+    bottom:calc(18px + env(safe-area-inset-bottom)); display:grid; gap:8px;
+    grid-template-columns:repeat(2,auto); pointer-events:auto; }
+  #botones button { font:inherit; font-size:12.5px; min-width:58px; padding:11px 10px;
+    color:#e6ecf1; background:rgba(16,21,26,.72); border:1px solid rgba(255,255,255,.14);
+    border-radius:10px; cursor:pointer; touch-action:manipulation; }
+  #botones button:active { background:rgba(96,124,150,.85); }
+
+  @media (max-width:760px) {
+    #links { top:calc(10px + env(safe-area-inset-top)); left:10px; right:10px;
+      display:flex; flex-wrap:wrap; gap:6px; }
+    #links a, #muebles, #variantes { font-size:12px; padding:8px 9px; }
+    #nota { display:none; }
+    #help { right:10px; left:10px; top:auto; width:auto;
+      bottom:calc(228px + env(safe-area-inset-bottom)); font-size:12px; }
+    #hud { left:10px; right:10px; bottom:calc(156px + env(safe-area-inset-bottom));
+      font-size:12px; }
+    #overlay .card { margin:14px; padding:20px 18px; }
+    #overlay h1 { font-size:19px; }
+    #overlay p { font-size:13px; }
+  }
+
   #cross { position:fixed; left:50%; top:50%; width:8px; height:8px; margin:-4px 0 0 -4px;
     border:1.5px solid rgba(255,255,255,.75); border-radius:50%; z-index:3; pointer-events:none; }
 </style>
@@ -55,6 +92,18 @@
 <body>
 <canvas id="c"></canvas>
 <div id="cross"></div>
+
+<div id="tactil">
+  <div id="palanca"><i></i></div>
+  <div id="botones">
+    <button data-accion="n0">Cochera</button>
+    <button data-accion="n1">Sala</button>
+    <button data-accion="n2">Cuartos</button>
+    <button data-accion="orbita">Maqueta</button>
+    <button data-accion="muebles">Muebles</button>
+    <button data-accion="ayuda">Ayuda</button>
+  </div>
+</div>
 
 <div id="links">
   <a href="plano.html">← Ver plano 2D</a>
@@ -88,6 +137,7 @@
        el mouse, mira arrastrando con el botón izquierdo.</p>
     <p><kbd>1</kbd> cochera · <kbd>2</kbd> nivel intermedio · <kbd>3</kbd> recámaras ·
        <kbd>O</kbd> vista de maqueta · <kbd>M</kbd> muebles y coches</p>
+    <p style="color:#7f8b96;font-size:12px">En móvil: la palanca de abajo a la izquierda para caminar, el dedo sobre la pantalla para mirar.</p>
     <p style="color:#7f8b96;font-size:12px">Apareces en la sala. Las escaleras del centro
        bajan a las recámaras; las del vestíbulo suben a la cochera.</p>
     <button id="start">Entrar a la casa</button>
@@ -97,8 +147,8 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "/node_modules/three/build/three.module.js",
-    "three/addons/": "/node_modules/three/examples/jsm/"
+    "three": "/vendor/three.module.js",
+    "three/addons/": "/vendor/addons/"
   }
 }
 </script>
@@ -115,9 +165,17 @@
     muebles: document.getElementById('muebles'),
     variantes: document.getElementById('variantes'),
     nota: document.getElementById('nota'),
+    palanca: document.getElementById('palanca'),
+    botones: document.querySelectorAll('#botones button'),
   };
   ui.variantes.innerHTML = VARIANTES
     .map((v, i) => '<option value="' + i + '">' + v.nombre + '</option>').join('');
+  if (matchMedia('(max-width:760px)').matches) ui.help.classList.add('hidden');
+
+  const tactil = document.getElementById('tactil');
+  const verTactil = () => tactil.classList.add('on');
+  if (matchMedia('(hover:none)').matches || innerWidth <= 760) verTactil();
+  addEventListener('touchstart', verTactil, { once: true, passive: true });
   window.viewer = new Viewer(document.getElementById('c'), ui, VARIANTES);
   ui.nota.textContent = VARIANTES[0].nota || '';
 </script>

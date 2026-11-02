@@ -70,6 +70,7 @@ export class Viewer {
     this.vy = 0;
     this.pos = new THREE.Vector3();
     this.collide = true;
+    this.mover = { x: 0, y: 0 };   // palanca tactil
 
     this._events();
     this.teleport('N1');
@@ -433,17 +434,33 @@ export class Viewer {
         : 'Primera persona (arrastra para mirar)';
     });
 
-    // mirar: con el mouse capturado, o arrastrando si no hubo captura
-    this.canvas.addEventListener('pointerdown', () => { this.dragging = this.active; });
-    addEventListener('pointerup', () => { this.dragging = false; });
-    addEventListener('mousemove', (e) => {
-      if (this.orbitMode || !this.active) return;
-      if (!this.locked() && !this.dragging) return;
-      this.yaw -= (e.movementX || 0) * 0.0022;
-      this.pitch -= (e.movementY || 0) * 0.0022;
+    // Mirar: con el mouse capturado, arrastrando, o con el dedo. En tactil
+    // movementX llega en 0, asi que el delta se lleva a mano.
+    let ultimo = null;
+    this.canvas.addEventListener('pointerdown', (e) => {
+      if (this.orbitMode) return;
+      this.dragging = this.active;
+      ultimo = { x: e.clientX, y: e.clientY };
+      try { this.canvas.setPointerCapture?.(e.pointerId); } catch { /* sin puntero real */ }
+    });
+    const soltar = () => { this.dragging = false; ultimo = null; };
+    addEventListener('pointerup', soltar);
+    addEventListener('pointercancel', soltar);
+    const mirar = (dx, dy) => {
+      this.yaw -= dx * 0.0022;
+      this.pitch -= dy * 0.0022;
       const lim = Math.PI / 2 - 0.02;
       this.pitch = Math.max(-lim, Math.min(lim, this.pitch));
+    };
+    addEventListener('pointermove', (e) => {
+      if (this.orbitMode || !this.active) return;
+      if (this.locked()) { mirar(e.movementX || 0, e.movementY || 0); return; }
+      if (!this.dragging || !ultimo) return;
+      mirar(e.clientX - ultimo.x, e.clientY - ultimo.y);
+      ultimo = { x: e.clientX, y: e.clientY };
     });
+
+    this._palanca();
   }
 
   /** Enciende o apaga todo lo que no es construccion (muebles, coches, macetas). */
@@ -460,6 +477,61 @@ export class Viewer {
     if (this.ui.muebles) {
       this.ui.muebles.textContent = on ? 'Ocultar muebles (M)' : 'Mostrar muebles (M)';
       this.ui.muebles.classList.toggle('on', on);
+    }
+  }
+
+  /** Palanca de movimiento para tactil: el dedo la arrastra y de ahi salen
+   *  las mismas teclas que usa el teclado. */
+  _palanca() {
+    const pad = this.ui.palanca;
+    if (!pad) return;
+    const punto = pad.firstElementChild;
+    let id = null;
+    const fijar = (v) => {
+      this.mover = v;                       // {x, y} de -1 a 1
+      const r = pad.clientWidth / 2 - 14;
+      punto.style.transform = 'translate(' + (v.x * r) + 'px,' + (-v.y * r) + 'px)';
+    };
+    fijar({ x: 0, y: 0 });
+    const leer = (e) => {
+      const b = pad.getBoundingClientRect();
+      const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+      let x = (e.clientX - cx) / (b.width / 2), y = -(e.clientY - cy) / (b.height / 2);
+      const d = Math.hypot(x, y);
+      if (d > 1) { x /= d; y /= d; }
+      fijar({ x, y });
+    };
+    pad.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      id = e.pointerId;
+      try { pad.setPointerCapture?.(id); } catch { /* sin puntero real */ }
+      this.active = true;
+      this.ui.overlay.classList.add('hidden');
+      leer(e);
+    });
+    pad.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== id) return;
+      e.preventDefault(); e.stopPropagation();
+      leer(e);
+    });
+    const soltar = (e) => {
+      if (id !== null && e.pointerId !== id) return;
+      id = null; fijar({ x: 0, y: 0 });
+    };
+    pad.addEventListener('pointerup', soltar);
+    pad.addEventListener('pointercancel', soltar);
+
+    for (const btn of (this.ui.botones || [])) {
+      btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation(); e.preventDefault();
+        const a = btn.dataset.accion;
+        if (a === 'n0' || a === 'n1' || a === 'n2') { this.active = true; this.ui.overlay.classList.add('hidden'); this.teleport(a.toUpperCase()); }
+        if (a === 'orbita') this.toggleOrbit();
+        if (a === 'muebles') this.toggleFurniture();
+        if (a === 'ayuda') this.ui.help.classList.toggle('hidden');
+        btn.blur();
+      });
     }
   }
 
@@ -551,6 +623,7 @@ export class Viewer {
       if (this.keys.KeyS || this.keys.ArrowDown) fwd -= 1;
       if (this.keys.KeyD || this.keys.ArrowRight) side += 1;
       if (this.keys.KeyA || this.keys.ArrowLeft) side -= 1;
+      if (this.mover) { fwd += this.mover.y; side += this.mover.x; }
 
       const dir = new THREE.Vector3();
       this.camera.getWorldDirection(dir);

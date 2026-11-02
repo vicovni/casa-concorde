@@ -91,7 +91,7 @@ export function renderLevel(level, STAIRS) {
   const Y = (y) => (bb.y1 - y) * PPM;              // eje Y invertido
 
   const out = [];
-  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(Wpx)} ${f(Hpx)}" width="${f(Wpx)}" height="${f(Hpx)}" class="plan">`);
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(Wpx)} ${f(Hpx)}" width="${f(Wpx)}" height="${f(Hpx)}" preserveAspectRatio="xMidYMid meet" class="plan">`);
   out.push(`<style>
     .plan { background:#fbfaf7; }
     text { font-family: ui-sans-serif, system-ui, sans-serif; fill:#2b2b2b; }
