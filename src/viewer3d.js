@@ -43,7 +43,9 @@ export class Viewer {
     this.scene.background = new THREE.Color(0x9fc2dd);
     this.scene.fog = new THREE.Fog(0x9fc2dd, 45, 130);
 
-    this.camera = new THREE.PerspectiveCamera(72, 1, 0.05, 400);
+    // 60 grados se lee mas cerca del ojo. Con 72 la casa se sentia mas
+    // chica de lo que es, porque un lente angular aleja todo.
+    this.camera = new THREE.PerspectiveCamera(60, 1, 0.05, 400);
     this.M = buildMaterials();
 
     // Todo lo que arma la casa cuelga de este grupo, para poder tirarlo y
