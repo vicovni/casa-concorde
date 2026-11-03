@@ -73,10 +73,13 @@ export class Viewer {
     this.mover = { x: 0, y: 0 };   // palanca tactil
 
     this._events();
-    this.teleport('N1');
+    this.teleport('N1');          // deja armado el punto de caminata
     this.clock = new THREE.Clock();
     this.resize();
     this.renderer.setAnimationLoop(() => this._tick());
+    // Arranca siempre en maqueta: se ve la casa entera antes de entrar y, al
+    // cambiar de variante, se compara el volumen desde el mismo angulo.
+    this.setOrbit(true);
   }
 
   /* ---------------------------- luces ---------------------------- */
@@ -355,6 +358,9 @@ export class Viewer {
     const n = ((i % this.variantes.length) + this.variantes.length) % this.variantes.length;
     this.iVariante = n;
     const vari = this.variantes[n];
+    // Te quedas donde estabas, mirando a lo mismo: es lo que deja comparar
+    // una variante contra otra sin volver a acomodar la camara.
+    const vista = this._vista();
 
     this.casa.traverse((o) => {
       if (o.isMesh || o.isLine) {
@@ -370,7 +376,7 @@ export class Viewer {
     this.D = buildHouse(vari.parche);
     this._build();
     this.toggleFurniture(this.furniture.visible);
-    this.teleport('N1');
+    this._restauraVista(vista);
     if (this.ui.variantes) this.ui.variantes.value = String(n);
     if (this.ui.nota) this.ui.nota.textContent = vari.nota || '';
     return vari;
@@ -466,14 +472,6 @@ export class Viewer {
   /** Enciende o apaga todo lo que no es construccion (muebles, coches, macetas). */
   toggleFurniture(on = !this.furniture.visible) {
     this.furniture.visible = on;
-    if (this.ui.variantes) {
-      this.ui.variantes.addEventListener('change', (e) => {
-        e.stopPropagation();
-        this.setVariante(Number(this.ui.variantes.value));
-        this.ui.variantes.blur();
-      });
-      this.ui.variantes.addEventListener('click', (e) => e.stopPropagation());
-    }
     if (this.ui.muebles) {
       this.ui.muebles.textContent = on ? 'Ocultar muebles (M)' : 'Mostrar muebles (M)';
       this.ui.muebles.classList.toggle('on', on);
@@ -544,22 +542,58 @@ export class Viewer {
     this.ui.overlay.classList.remove('hidden');
   }
 
-  toggleOrbit() {
-    this.orbitMode = !this.orbitMode;
-    if (this.orbitMode) {
+  /** Enciende o apaga la vista de maqueta. Si le pasas una vista guardada,
+   *  entra a la maqueta con esa camara en lugar del angulo por omision. */
+  setOrbit(on, vista = null) {
+    this.orbitMode = on;
+    if (on) {
       this.active = false;
       if (document.exitPointerLock) document.exitPointerLock();
-      this.camera.position.set(22, 16, 22);
-      this.orbit.target.set(5, -3, 3);
+      if (vista) {
+        this.camera.position.copy(vista.cam);
+        this.orbit.target.copy(vista.target);
+      } else {
+        this.camera.position.set(22, 16, 22);
+        this.orbit.target.set(5, -3, 3);
+      }
       this.orbit.enabled = true;
       this.ui.overlay.classList.add('hidden');
-      this.ui.mode.textContent = 'Vista orbital (O para volver a caminar)';
+      this.ui.mode.textContent = 'Maqueta (O o «Maqueta» para caminar)';
     } else {
       this.orbit.enabled = false;
       this.teleport('N1');
       this.ui.overlay.classList.remove('hidden');
       this.ui.mode.textContent = 'Primera persona';
     }
+  }
+
+  toggleOrbit() { this.setOrbit(!this.orbitMode); }
+
+  /** Lo que hay que recordar para volver a la misma vista despues de rearmar
+   *  la casa: donde estabas de pie, a donde mirabas y la camara de maqueta. */
+  _vista() {
+    return {
+      orbita: this.orbitMode,
+      activa: this.active,
+      pos: this.pos.clone(),
+      yaw: this.yaw,
+      pitch: this.pitch,
+      cam: this.camera.position.clone(),
+      target: this.orbit.target.clone(),
+    };
+  }
+
+  _restauraVista(v) {
+    if (v.orbita) { this.setOrbit(true, v); return; }
+    this.orbitMode = false;
+    this.orbit.enabled = false;
+    this.pos.copy(v.pos);
+    this.camera.position.copy(this.pos);
+    this.yaw = v.yaw;
+    this.pitch = v.pitch;
+    this.camera.rotation.set(v.pitch, v.yaw, 0, 'YXZ');
+    this.vy = 0;
+    this.active = v.activa;
   }
 
   teleport(levelId) {

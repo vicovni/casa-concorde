@@ -26,7 +26,7 @@ doble clic no funciona.
 | `Shift` | correr |
 | `1` `2` `3` | ir a cochera / nivel intermedio / recámaras |
 | `M` | mostrar u ocultar muebles, coches y macetas (arranca en obra gris) |
-| `O` | vista de maqueta (orbital) |
+| `O` | maqueta / caminar (el recorrido **arranca en maqueta**; al cambiar de variante te quedas en la misma vista) |
 | `C` | atravesar muros |
 | `H` | ocultar la ayuda |
 
