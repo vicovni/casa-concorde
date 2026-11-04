@@ -183,10 +183,14 @@ function mergeEjes(base, parche = {}) {
 
 /** Aplica altas, bajas y cambios por id sobre una lista con `id`.
  *  `prefijo` evita que el parche de un nivel se cuele en los demas: solo se
- *  dan de alta los ids que le pertenecen. */
-function patchById(lista, parche = {}, prefijo = null) {
+ *  dan de alta los ids que le pertenecen.
+ *  `altas` en false deja pasar solo cambios y bajas: los pretiles comparten
+ *  el parche de muros, y sin esto parchear un muro daba de alta un pretil
+ *  fantasma, sin trazo, que reventaba al dibujarse. */
+function patchById(lista, parche = {}, prefijo = null, altas = true) {
   let out = lista.filter((it) => parche[it.id] !== null);
   out = out.map((it) => (parche[it.id] ? { ...it, ...parche[it.id] } : it));
+  if (!altas) return out;
   for (const [id, v] of Object.entries(parche)) {
     if (!v || lista.some((it) => it.id === id)) continue;
     if (prefijo && !id.startsWith(prefijo)) continue;
@@ -538,7 +542,7 @@ export function buildHouse(parche = {}) {
       ...lv,
       rooms: patchById(lv.rooms, parche.cuartos || {}, pre),
       walls: patchById(lv.walls, parche.muros || {}, pre),
-      parapets: lv.parapets ? patchById(lv.parapets, parche.muros || {}, pre) : undefined,
+      parapets: lv.parapets ? patchById(lv.parapets, parche.muros || {}, pre, false) : undefined,
     };
   });
 

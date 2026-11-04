@@ -190,6 +190,15 @@ La variante **1. Sala a doble altura** usa las dos cosas: parches por id para
 quitar la cocina, la zotehuela y el prisma, y `extra` para abrir la losa de la
 cochera, levantar los muros altos y ponerle techo.
 
+### Las variantes de hoy
+
+| # | Variante | De que se trata |
+|---|----------|-----------------|
+| 0 | Actual (as is) | La casa como esta. Las demas heredan de ella. |
+| 1 | Sala a doble altura | La sala crece sobre la recamara 1, con ventanales y doble altura. |
+| 2 | Escalera al oriente | La escalera a las recamaras se corre al muro oriente y baja a la zotehuela. La sala queda con 8.60 m de fachada libre. Pide recalzar el muro oriente. |
+| 3 | Escalera a la banda | La escalera sale de la sala y baja por la banda de servicio, bajo una franja cerrada sobre la terraza. Libera la sala entera; deja un paso de 0.77 m y tumba los dos muros que apoyan la losa de la terraza. |
+
 ## Desde el móvil
 
 El recorrido 3D trae controles táctiles: una **palanca** abajo a la izquierda
