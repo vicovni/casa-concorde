@@ -110,6 +110,61 @@ const drawLawn = (ctx, s) => {
   }
 };
 
+/* Arena rastrillada del jardin zen. Las ondas tienen periodo s y los surcos
+   caen cada 16 px de 256, asi que la textura sigue cerrando al repetirse. */
+const drawArena = (ctx, s) => {
+  ctx.fillStyle = '#dcd3c0'; ctx.fillRect(0, 0, s, s);
+  for (let i = 0; i < 2200; i++) {
+    ctx.fillStyle = 'rgba(' + (150 + Math.random() * 60) + ',' +
+      (140 + Math.random() * 55) + ',' + (115 + Math.random() * 45) + ',0.5)';
+    ctx.fillRect(Math.random() * s, Math.random() * s, 1.6, 1.6);
+  }
+  const onda = (x) => Math.sin((x / s) * Math.PI * 2) * 2.6;
+  for (let y = 0; y < s; y += 16) {
+    for (const [dy, color, ancho] of [[0, 'rgba(118,108,88,0.38)', 2.4],
+                                      [3.5, 'rgba(255,252,243,0.42)', 2]]) {
+      ctx.strokeStyle = color; ctx.lineWidth = ancho;
+      ctx.beginPath();
+      for (let x = 0; x <= s; x += 8) {
+        const yy = y + dy + onda(x);
+        if (x === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
+      }
+      ctx.stroke();
+    }
+  }
+  noise(ctx, s, 10);
+};
+
+const drawRoca = (ctx, s) => {
+  ctx.fillStyle = '#6d6a65'; ctx.fillRect(0, 0, s, s);
+  for (let i = 0; i < 160; i++) {
+    const v = Math.random() < 0.5 ? 0 : 255;
+    ctx.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',' + (Math.random() * 0.09) + ')';
+    ctx.beginPath();
+    ctx.arc(Math.random() * s, Math.random() * s, Math.random() * 18 + 4, 0, 7);
+    ctx.fill();
+  }
+  noise(ctx, s, 26);
+};
+
+/* Follaje de la enredadera: hojas sueltas encimadas sobre fondo oscuro. */
+const drawFollaje = (ctx, s) => {
+  ctx.fillStyle = '#263c22'; ctx.fillRect(0, 0, s, s);
+  for (let i = 0; i < 1100; i++) {
+    ctx.fillStyle = 'rgb(' + (42 + Math.random() * 62) + ',' +
+      (88 + Math.random() * 76) + ',' + (38 + Math.random() * 46) + ')';
+    ctx.save();
+    ctx.translate(Math.random() * s, Math.random() * s);
+    ctx.rotate(Math.random() * 7);
+    ctx.beginPath();
+    const r = 4 + Math.random() * 7;
+    ctx.ellipse(0, 0, r, r * 0.58, 0, 0, 7);
+    ctx.fill();
+    ctx.restore();
+  }
+  noise(ctx, s, 12);
+};
+
 const drawAsphalt = (ctx, s) => {
   ctx.fillStyle = '#4a4a4c'; ctx.fillRect(0, 0, s, s);
   noise(ctx, s, 34);
@@ -167,6 +222,21 @@ export function buildMaterials() {
     metalness: 0, transmission: 0.0, side: THREE.DoubleSide,
   });
   M.frame = new THREE.MeshStandardMaterial({ color: 0x3a3f42, roughness: 0.5, metalness: 0.4 });
+
+  // Jardin zen de la zotehuela de abajo
+  M.arena = new THREE.MeshStandardMaterial({
+    map: tex('arena', 256, drawArena, [2.2, 2.2]), roughness: 1,
+  });
+  M.roca = new THREE.MeshStandardMaterial({
+    map: tex('roca', 128, drawRoca, [1, 1]), roughness: 0.95,
+  });
+  M.follaje = new THREE.MeshStandardMaterial({
+    map: tex('follaje', 256, drawFollaje, [2, 3]), roughness: 0.9,
+    side: THREE.DoubleSide,
+  });
+  M.henequen = new THREE.MeshStandardMaterial({
+    color: 0x7d9472, roughness: 0.75, side: THREE.DoubleSide,
+  });
 
   M.lawn = new THREE.MeshStandardMaterial({
     map: tex('lawn', 512, drawLawn, [1.2, 1.2]), roughness: 0.95,

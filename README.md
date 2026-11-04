@@ -109,6 +109,40 @@ Ambas de 0.91 de ancho y 17 peraltes de 17.1 cm (el RCDF pide peralte máximo
   1.42 m del fondo de la sala para que el nivel inferior empiece justo donde
   la sala termina, y le sobresalen 2 escalones dentro del pasillo.
 
+## El jardín zen de la zotehuela
+
+La zotehuela del nivel inferior (2.74 × 1.68) no es un patio cualquiera: es el
+**único hueco** que tiene la losa de la terraza, así que es un pozo de luz de
+2.90 m de alto que se mira desde arriba. Ahí va un jardín seco: cama de arena
+rastrillada, tres henequenes, piedras y enredadera en el muro del fondo.
+
+El reparto está hecho para que **el jardín y la escalera volada de la variante
+3 no se estorben**. Esa escalera cruza el pozo por la esquina noroeste, así
+que el jardín se arma en **L**, en la franja oriente y en la sur:
+
+| franja | de | qué lleva |
+|---|---|---|
+| entrada | x 7.10 a 7.80 | el lavadero, que se recorrió aquí |
+| aire de la escalera | x 7.10 a 8.70, y −1.00 a 0.00 | nada: por ahí vuela el tramo de la variante 3 |
+| cama oriente | x 8.70 a 9.84 | henequén grande, las dos piedras, enredadera al fondo |
+| cama sur | x 7.80 a 8.70, y −1.68 a −1.00 | henequén chico y la laja |
+
+Así es **una sola pieza** que sirve igual en el as-is y en la variante 3, sin
+dos versiones que mantener. Donde no cabe es en las variantes 2 y 2b: ahí la
+escalera **aterriza dentro** de la zotehuela y el pozo se vuelve el arranque
+del tramo y la ruta a las recámaras, así que el jardín no se pone. La regla es
+automática (`zotehuelaLibre` en `src/furniture.js`): lo que se mira es el pie
+del tramo, no cualquier extremo, porque la volada de la variante 3 tiene la
+cabeza sobre el pozo pero pasa a 2 m de altura.
+
+El jardín vive en `src/furniture.js`, o sea que se prende con **M**, igual que
+las macetas y los coches.
+
+**Lo que cuesta en la variante 3:** ahí la losa de la terraza se vuelve a
+cerrar sobre el pozo y solo queda abierta la ranura de la escalera, así que el
+jardín se queda **sin cielo propio** y recibe luz nada más de lado. En el as-is
+tiene el pozo entero encima.
+
 ## Lo que sigue sin cuadrar
 
 1. **La zotehuela de la sala quedó de 1.54 × 1.82**, no × 1.73. Los 1.82 son lo

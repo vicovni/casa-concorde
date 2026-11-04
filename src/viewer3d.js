@@ -421,7 +421,7 @@ export class Viewer {
     this._stairs();
     this._terrain();
     // todo lo que no es construccion va en un solo grupo, para poder apagarlo
-    this.furniture = buildFurniture(this.M);
+    this.furniture = buildFurniture(this.M, this.D);
     this.furniture.visible = false;     // arranca en obra gris; la tecla M lo enciende
     this.casa.add(this.furniture);
   }
