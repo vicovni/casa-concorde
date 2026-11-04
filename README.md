@@ -198,7 +198,30 @@ cochera, levantar los muros altos y ponerle techo.
 | 1 | Sala a doble altura | La sala crece sobre la recamara 1, con ventanales y doble altura. |
 | 2 | Escalera al oriente | La escalera a las recamaras se corre al muro oriente y baja a la zotehuela. La sala queda con 8.60 m de fachada libre. Pide recalzar el muro oriente. |
 | 2b | Escalera al oriente, cerrada | La misma, pero con un muro y una puerta entre la sala y la escalera: queda como nicho y la sala se lee como un rectangulo. Es la unica variante que hereda de otra. |
-| 3 | Escalera a la banda | La escalera sale de la sala y baja por la banda de servicio, bajo una franja cerrada sobre la terraza. Libera la sala entera; deja un paso de 0.77 m y tumba los dos muros que apoyan la losa de la terraza. |
+| 3 | Escalera a la banda | La escalera sale de la sala y baja **volada** por la banda de servicio, bajo una franja cerrada sobre la terraza. Libera la sala entera; deja un paso de 0.77 m y tumba los dos muros que apoyan la losa de la terraza. |
+
+### La escalera volada de la variante 3
+
+Un tramo puede traer `volada`, y entonces no se dibuja macizo: cada huella es
+una pieza que vuela del muro, y el peralte es un cristal de piso a piso del
+escalón.
+
+```js
+volada: { muro: -1, esp: 0.12, nariz: 0.05, cristal: 0.015, mat: 'madera' }
+rail:   [1]     // barandal solo del lado abierto
+```
+
+`muro` dice de qué costado vuela (el otro queda abierto y lleva el barandal),
+`esp` es el canto en el arranque y `nariz` el del extremo libre: un voladizo
+lleva el canto donde está el momento y adelgaza hacia afuera. Por eso de los
+17.1 cm del peralte el cristal se ve casi entero.
+
+En la variante 3 vuela 0.91 m del muro de contención norte. Las huellas no se
+empotran barrenando ese muro: se montan sobre una zanca de tubo anclada a su
+cara, por debajo del nivel de pisada, así que el ancho libre sigue siendo 0.91.
+El costado sur tiene una caída de hasta 2.90 m al paso, así que el paño de
+cristal con pasamanos no es adorno. Volándola se recupera la cuña que hoy sería
+maciza debajo del tramo.
 
 ## Desde el móvil
 

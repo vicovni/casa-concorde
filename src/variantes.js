@@ -282,14 +282,31 @@ export const VARIANTES = [
        - la zotehuela de abajo queda techada;
        - la puerta a la terraza se recorre al poniente;
        - la caja vieja se queda como bodega, con su acceso ya abierto.
+
+     El tramo va VOLADO: huellas macizas de madera que vuelan 0.91 del muro de
+     contencion norte, y peraltes de cristal laminado. La huella no es una tabla
+     pareja: lleva 12 cm de canto en el arranque, donde esta el momento, y 5 en
+     la nariz, asi que de los 17.1 del peralte el cristal se ve casi entero. No se barrena el
+     muro de contencion: las huellas se montan sobre una zanca metalica anclada
+     a su cara, por debajo del nivel de pisada, asi que el ancho libre sigue
+     siendo 0.91. La zanca va en tubo, no en placa, porque con un volado de
+     0.91 lo que recibe es torsion. El acero sale casi gratis: los dos muros de
+     0.18 que hay que tumbar ya pedian trabe en ese mismo tramo.
+
+     Volandola se gana lo que hoy seria macizo debajo: en el extremo oriente,
+     una cuna de hasta 2.90 m de alto sobre el piso del nivel inferior, y la luz
+     que pasa por los cristales cae al paso de 0.77. El costado sur queda con
+     una caida de hasta 2.90 al paso, asi que ahi el barandal no es adorno: va
+     pano de cristal corrido mas pasamanos.
      ====================================================================== */
   {
     id: 'escalera-banda',
     nombre: '3. Escalera a la banda',
-    nota: 'La escalera sale de la sala y baja por la banda de servicio, pegada al '
-        + 'muro de contención, bajo una franja cerrada de 1.00 m sobre la terraza. '
-        + 'Libera la sala entera; a cambio deja un paso de 0.77 m y tumba los dos '
-        + 'muros que apoyan la losa de la terraza.',
+    nota: 'La escalera sale de la sala y baja volada por la banda de servicio, '
+        + 'pegada al muro de contención, bajo una franja cerrada de 1.00 m sobre la '
+        + 'terraza: huellas de madera y peraltes de cristal. Libera la sala entera; '
+        + 'a cambio deja un paso de 0.77 m y tumba los dos muros que apoyan la losa '
+        + 'de la terraza.',
     parche: {
       escaleras: { tramos: { e2: null } },
       muros: {
@@ -344,7 +361,13 @@ export const VARIANTES = [
         casa.STAIRS.push({
           id: 'v3.esc', from: [xTop, yEsc], to: [xBot, yEsc],
           z0: h.Z.N1, z1: h.Z.N2, width: casa.ESC.ancho, peraltes: 17,
-          note: 'sala -> recamaras, 17 peraltes de 17.1 en la banda',
+          // volada del muro de contencion (lado -1, el norte, y = 0.00) con el
+          // peralte de cristal: canto de 12 en el arranque y 5 en la nariz
+          volada: { muro: -1, esp: 0.12, nariz: 0.05, cristal: 0.015, mat: 'madera' },
+          // barandal solo del lado abierto (el sur, hacia el paso de 0.77);
+          // del otro esta el muro de contencion, que es de donde vuela
+          rail: [1],
+          note: 'sala -> recamaras, 17 peraltes de 17.1, volada en la banda',
         });
         n2.rooms.push({
           id: 'n2.bodega', name: 'Bodega (caja vieja)', kind: 'closet',

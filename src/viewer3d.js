@@ -20,6 +20,13 @@ const GRAVITY = 18;
 // un escalon se encime con el siguiente y el conjunto se lea como una
 // escalera maciza por debajo, no como tablas flotando.
 const ESCALON = 0.30;
+// Escalera volada: espesor de la tabla que hace de huella, espesor del cristal
+// que hace de peralte y material de la huella ('madera' o 'concreto'). Un tramo
+// los puede pisar uno por uno con s.volada.
+// La huella no es una tabla pareja: un voladizo lleva el canto donde esta el
+// momento, o sea en el arranque, y adelgaza hacia la nariz. Asi la cara
+// vertical queda casi toda de cristal y no mitad de madera.
+const VOLADA = { esp: 0.12, nariz: 0.05, cristal: 0.015, mat: 'madera', muro: -1 };
 
 export class Viewer {
   constructor(canvas, ui, variantes = [{ id: 'actual', nombre: 'Actual', parche: {} }]) {
@@ -202,8 +209,50 @@ export class Viewer {
       const g = stairSteps(s);
       const nx = -g.uy, ny = g.ux, hw = s.width / 2;
       const zMin = Math.min(s.z0, s.z1) - 0.25;
+      // Volada: cada huella es una tabla que vuela del muro, sin nada macizo
+      // debajo, y el peralte es un cristal que cuelga de la huella de arriba.
+      const vol = s.volada ? { ...VOLADA, ...s.volada } : null;
       for (const st of g.steps) {
         const cx = (st.x0 + st.x1) / 2, cy = (st.y0 + st.y1) / 2;
+        if (vol) {
+          // Cuna: en el eje transversal va del canto de arranque, pegado al
+          // muro del que vuela, al canto de la nariz, en el extremo libre.
+          const lado = vol.muro;
+          const forma = new THREE.Shape([
+            new THREE.Vector2(0, 0),
+            new THREE.Vector2(s.width, 0),
+            new THREE.Vector2(s.width, -vol.nariz),
+            new THREE.Vector2(0, -vol.esp),
+          ]);
+          const geoT = new THREE.ExtrudeGeometry(
+            forma, { depth: g.tread, bevelEnabled: false });
+          if (lado > 0) geoT.translate(0, 0, -g.tread);
+          const tabla = new THREE.Mesh(
+            geoT, vol.mat === 'concreto' ? this.M.stepTread : this.M.floorWood);
+          tabla.position.set(
+            st.x0 + nx * hw * lado, st.zTop, -(st.y0 + ny * hw * lado));
+          tabla.rotation.y = Math.atan2(-lado * ny, -lado * nx);
+          tabla.castShadow = true; tabla.receiveShadow = true;
+          this.casa.add(tabla);
+          // El cristal cubre el peralte COMPLETO y va por delante del canto de
+          // la tabla: si fuera del lomo de esta huella al bajo de la anterior
+          // solo medirian 8 cm de los 17.1 y la cara se leeria mitad madera.
+          if (vol.cristal > 0) {
+            const alto = Math.abs(g.riser);
+            const zAnt = st.zTop - g.riser;      // lomo de la huella anterior
+            const vx = Math.abs(g.ux) > 0.5 ? vol.cristal : s.width;
+            const vy = Math.abs(g.ux) > 0.5 ? s.width : vol.cristal;
+            const cr = new THREE.Mesh(
+              new THREE.BoxGeometry(vx, alto, vy), this.M.glass);
+            cr.position.set(
+              st.x0 + g.ux * vol.cristal / 2,
+              Math.min(st.zTop, zAnt) + alto / 2,
+              -(st.y0 + g.uy * vol.cristal / 2));
+            this.casa.add(cr);
+          }
+          this._narizEscalon(st, g, s);
+          continue;
+        }
         const sx = Math.abs(g.ux) > 0.5 ? g.tread : s.width;
         const sy = Math.abs(g.ux) > 0.5 ? s.width : g.tread;
         // El escalon no baja macizo hasta el piso: lleva el espesor de la losa
@@ -224,14 +273,7 @@ export class Viewer {
         m.castShadow = true; m.receiveShadow = true;
         this.casa.add(m);
 
-        // narices: bajando, la escalera solo ensena huellas y sin una linea en
-        // el filo se lee como rampa lisa
-        const nx2 = Math.abs(g.ux) > 0.5 ? 0.05 : s.width;
-        const ny2 = Math.abs(g.ux) > 0.5 ? s.width : 0.05;
-        const nose = new THREE.Mesh(
-          new THREE.BoxGeometry(nx2, 0.02, ny2), this.M.stepNose);
-        nose.position.set(st.x1 - g.ux * 0.025, st.zTop + 0.011, -(st.y1 - g.uy * 0.025));
-        this.casa.add(nose);
+        this._narizEscalon(st, g, s);
       }
       // rampa invisible para caminar
       const bbx = {
@@ -241,8 +283,10 @@ export class Viewer {
         y1: Math.max(s.from[1], s.to[1]) + (Math.abs(g.uy) > 0.5 ? 0 : hw),
       };
       this.ramps.push({ s, bbx, g });
-      // barandal lateral (pasamanos + postes); las escaleras entre muros no llevan
-      for (const side of (s.rail === false ? [] : [1, -1])) {
+      // barandal lateral (pasamanos + postes); las escaleras entre muros no
+      // llevan, y s.rail puede traer solo el lado abierto, p. ej. [-1].
+      const lados = Array.isArray(s.rail) ? s.rail : (s.rail === false ? [] : [1, -1]);
+      for (const side of lados) {
         const p0 = new THREE.Vector3(
           s.from[0] + nx * hw * side, s.z0 + 0.95, -(s.from[1] + ny * hw * side));
         const p1 = new THREE.Vector3(
@@ -255,6 +299,26 @@ export class Viewer {
           new THREE.Vector3(1, 0, 0), dir.clone().normalize());
         rail.castShadow = true;
         this.casa.add(rail);
+        if (vol) {
+          // Volada: en vez de postes, un pano de cristal que sigue la pendiente
+          // y cierra el costado abierto. Arranca 0.10 por debajo de la linea de
+          // la rampa para que no abra luz sobre las narices.
+          const e = vol.cristal || 0.015, dz = s.z1 - s.z0;
+          const forma = new THREE.Shape([
+            new THREE.Vector2(0, -0.10),
+            new THREE.Vector2(g.len, dz - 0.10),
+            new THREE.Vector2(g.len, dz + 0.90),
+            new THREE.Vector2(0, 0.90),
+          ]);
+          const geo = new THREE.ExtrudeGeometry(forma, { depth: e, bevelEnabled: false });
+          geo.translate(0, 0, -e / 2);
+          const pano = new THREE.Mesh(geo, this.M.glass);
+          pano.position.set(
+            s.from[0] + nx * hw * side, s.z0, -(s.from[1] + ny * hw * side));
+          pano.rotation.y = Math.atan2(g.uy, g.ux);
+          this.casa.add(pano);
+          continue;
+        }
         for (let i = 0; i <= 4; i++) {
           const t = i / 4;
           const p = new THREE.Vector3().lerpVectors(p0, p1, t);
@@ -265,6 +329,16 @@ export class Viewer {
         }
       }
     }
+  }
+
+  /** Nariz del escalon: bajando, un tramo sin linea en el filo se lee como rampa. */
+  _narizEscalon(st, g, s) {
+    const nx2 = Math.abs(g.ux) > 0.5 ? 0.05 : s.width;
+    const ny2 = Math.abs(g.ux) > 0.5 ? s.width : 0.05;
+    const nose = new THREE.Mesh(
+      new THREE.BoxGeometry(nx2, 0.02, ny2), this.M.stepNose);
+    nose.position.set(st.x1 - g.ux * 0.025, st.zTop + 0.011, -(st.y1 - g.uy * 0.025));
+    this.casa.add(nose);
   }
 
   _terrain() {
