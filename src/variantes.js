@@ -21,6 +21,42 @@
    Los ids estan en src/model.js: 'n1.sala', 'n2.rec1', 'n1.sala-cocina'...
    ========================================================================== */
 
+/* El parche de la variante 2, aparte: la 2b lo hereda tal cual y encima le
+   pone el muro. Es la unica herencia entre variantes; las demas heredan de la
+   casa actual. */
+const AL_ORIENTE = {
+  // El hueco queda pegado a la cara interior del muro oriente. Y arranca un
+  // escalon mas al norte que hoy: asi, donde la escalera se mete bajo la losa
+  // de la terraza, ya hay 2.20 de altura libre y no 1.98.
+  escaleras: { e2: { x: 9.325, yBot: -0.25 } },
+  muros: {
+    // ese costado de la caja ahora es el propio muro exterior
+    'n2.caja-esc-oriente': null,
+  },
+
+  extra(casa, h) {
+    const n1 = casa.LEVEL_BY_ID.N1;
+    const n2 = casa.LEVEL_BY_ID.N2;
+    const e2 = casa.ESC.e2;
+    const medio = casa.ESC.ancho / 2 + e2.holgura;
+    const xW = e2.x - medio, xE = e2.x + medio;
+
+    // La fachada pierde el paso del centro y lo gana al oriente. La puerta a
+    // la terraza se muda al lugar que dejo la escalera.
+    const i = n1.walls.findIndex((m) => m.id === 'n1.fachada-sur');
+    n1.walls[i] = h.muroY('n1.fachada-sur', 'Y_SALA_S', h.O.w, h.O.e, {
+      t: h.T.GLASS, kind: 'glass',
+      vanos: [h.paso(xW, xE), h.puerta(4.40, 5.80, 2.40)],
+    });
+
+    // La zotehuela esta descubierta: se techa la franja por donde bajan los
+    // ultimos escalones y el resto se queda abierto.
+    n2.roofSlab.holes = [
+      h.rect(h.fP('X_ZOT_W'), h.fP('Y_N2_R'), xW, h.fN('Y_N2_N')),
+    ];
+  },
+};
+
 export const VARIANTES = [
   {
     id: 'actual',
@@ -167,36 +203,61 @@ export const VARIANTES = [
     nota: 'La escalera se recorre al muro oriente y baja a la zotehuela. La sala '
         + 'queda con 8.60 m de fachada libre y sin hueco al centro. Pide recalzar '
         + 'el muro oriente antes de excavar.',
+    parche: AL_ORIENTE,
+  },
+
+  /* ========================================================================
+     2b. LA MISMA, PERO CERRADA
+     ------------------------------------------------------------------------
+     Hereda todo lo de la 2 y encima le pone un muro de piso a techo entre la
+     sala y la escalera, con su puerta. La escalera deja de ser un hueco en la
+     sala y pasa a ser un nicho: la fachada sur queda de 8.50 m corridos y la
+     sala se lee como un solo rectangulo.
+
+     El nicho mide 1.03 x 4.00 y se entra por una puerta de 0.90 en su costado
+     poniente, frente al descanso de arranque (1.20 x 1.03) que queda antes del
+     primer escalon. Al fondo lo cierra la cocina, que ya estaba ahi.
+     ====================================================================== */
+  {
+    id: 'escalera-oriente-cerrada',
+    nombre: '2b. Escalera al oriente, cerrada',
+    nota: 'La misma escalera de la variante 2, pero detrás de un muro con puerta: '
+        + 'queda como un nicho propio y la sala se lee como un solo rectángulo, '
+        + 'con 8.50 m de fachada corrida.',
     parche: {
-      // El hueco queda pegado a la cara interior del muro oriente. Y arranca
-      // un escalon mas al norte que hoy: asi, donde la escalera se mete bajo la
-      // losa de la terraza, ya hay 2.20 de altura libre y no 1.98.
-      escaleras: { e2: { x: 9.325, yBot: -0.25 } },
-      muros: {
-        // ese costado de la caja ahora es el propio muro exterior
-        'n2.caja-esc-oriente': null,
-      },
+      ...AL_ORIENTE,
+      muros: { ...AL_ORIENTE.muros },
 
       extra(casa, h) {
+        AL_ORIENTE.extra(casa, h);        // primero, todo lo de la variante 2
+
         const n1 = casa.LEVEL_BY_ID.N1;
         const n2 = casa.LEVEL_BY_ID.N2;
         const e2 = casa.ESC.e2;
-        const medio = casa.ESC.ancho / 2 + e2.holgura;
-        const xW = e2.x - medio, xE = e2.x + medio;
+        const xMuro = e2.x - (casa.ESC.ancho / 2 + e2.holgura + e2.muro / 2);
+        const xCara = xMuro - e2.muro / 2;     // cara del muro hacia la sala
+        const yFondo = h.fN('Y_COC_S');        // el nicho topa con la cocina
+        const alto = (h.Z.N1 + h.H.FLOOR) - h.Z.N2;
+        const piso = h.Z.N1 - h.Z.N2;          // piso de la sala, medido desde abajo
 
-        // La fachada pierde el paso del centro y lo gana al oriente. La puerta
-        // a la terraza se muda al lugar que dejo la escalera.
-        const i = n1.walls.findIndex((m) => m.id === 'n1.fachada-sur');
-        n1.walls[i] = h.muroY('n1.fachada-sur', 'Y_SALA_S', h.O.w, h.O.e, {
-          t: h.T.GLASS, kind: 'glass',
-          vanos: [h.paso(xW, xE), h.puerta(4.40, 5.80, 2.40)],
+        // El muro de la caja ya existe, pero solo asoma 1.00 sobre el piso de
+        // la sala. Se rehace de piso a techo, se alarga hasta la cocina y se le
+        // abre la puerta del nicho.
+        const i = n2.walls.findIndex((m) => m.id === 'n2.caja-esc-poniente');
+        n2.walls[i] = h.muroX('n2.caja-esc-poniente', xMuro, 'Y_N2_N', yFondo, {
+          t: e2.muro, h: alto, kind: 'int',
+          vanos: [h.vano('door', 3.20, 4.10, piso, piso + 2.10)],
         });
 
-        // La zotehuela esta descubierta: se techa la franja por donde bajan los
-        // ultimos escalones y el resto se queda abierto.
-        n2.roofSlab.holes = [
-          h.rect(h.fP('X_ZOT_W'), h.fP('Y_N2_R'), xW, h.fN('Y_N2_N')),
-        ];
+        // La sala suelta esa franja y el nicho se vuelve un cuarto propio.
+        const sala = n1.rooms.find((r) => r.id === 'n1.sala');
+        sala.poly = sala.poly.map(([x, y]) => [Math.min(x, xCara), y]);
+        sala.dim = '8.50 x 4.00 (4.72 fuera de la cocina)';
+        n1.rooms.push({
+          id: 'n1.nicho-escalera', name: 'Escalera a las recamaras', kind: 'hall',
+          dim: '1.03 x 4.00',
+          poly: h.rect(xCara + e2.muro, h.fP('Y_SALA_S'), h.fN('XE'), yFondo),
+        });
       },
     },
   },
